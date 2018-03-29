@@ -771,7 +771,7 @@ public:
 			QQ[0][0] = correctdata2[nnn / 10][1]; QQ[0][1] = correctdata2[nnn / 10][2]; QQ[0][2] = 0;
 		Mul31(MATIRC, QQ, QQQ);
 		output[3] = -QQQ[0][0];
-		output[4] = -QQQ[0][1];
+		output[4] = -QQQ[0][1]; 
 	};
 
 	void ReCorrectionFor360Zaxis(double input[6], double output[6])
