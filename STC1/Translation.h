@@ -160,11 +160,12 @@ public:
 	};
 	void Mul31(double x[3][3], double y[3][1], double z[3][1])//33*31乘法
 	{
-		double A[3][3], B[3][3];
+		double A[3][3], B[3][1];
 		int i, j, k;
 		for (i = 0; i < 3; i++)//防止数据空间串扰,
 		{
 			B[i][0] = y[i][0];
+			z[i][0] = 0;
 			for (j = 0; j < 3; j++)
 			{
 				A[i][j] = x[i][j];
@@ -694,12 +695,12 @@ public:
 	};
 
 	//对于360°旋转台与房间Z轴偏移的校正
-	void CorrectionFor360Zaxis(double input[6],double output[6])
+	void CorrectionFor360Zaxis(double output[36][2])
 	{
 		CString strFilePath;
 		CFile file;
 		
-			strFilePath = L"./360Z_Axis_Corr.csv";
+		strFilePath = L"./360Z_Axis_Corr.csv";
 		if (!file.Open(strFilePath, CFile::modeRead))
 			 {
 			return;
@@ -753,25 +754,26 @@ public:
 				result += buffer[i];
 				}
 			}
-		for (size_t i = 0; i < 6; i++)
-			 {
-			output[i] = 0;
+
+			double MATIRC[3][3]; double QQ[3][1]; double QQQ[3][1];
+			for (size_t i = 0; i < 36; i++)
+			{
+				int temp;
+				temp = (27 - i) * 10; if (temp>180)
+				{
+					temp -= 360;
+				}
+				double a = temp * π / 180;				
+				MATIRC[0][0] = cos(-a); MATIRC[0][1] = sin(-a); MATIRC[0][2] = 0;
+				MATIRC[1][0] = -sin(-a); MATIRC[1][1] = cos(-a); MATIRC[1][2] = 0;
+				MATIRC[2][0] = 0; MATIRC[2][1] = 0; MATIRC[2][2] = 1;
+
+				QQ[0][0] = correctdata2[i][1]; QQ[0][1] = correctdata2[i][2]; QQ[0][2] = 0;
+				Mul31(MATIRC, QQ, QQQ);
+				output[i][0] = -QQQ[0][0];
+				output[i][1] = -QQQ[0][1];
+				//file.Close();
 			}
-		int nnn = 270 - (int)input[2];
-		if (nnn >= 360)
-			 {
-			nnn -= 360;
-			}
-		double a = input[2] * π / 180;
-		double MATIRC[3][3]; double QQ[3][1]; double QQQ[3][1];
-		MATIRC[0][0] = cos(-a); MATIRC[0][1] = sin(-a); MATIRC[0][2] = 0;
-		MATIRC[1][0] = -sin(-a); MATIRC[1][1] = cos(-a); MATIRC[1][2] = 0;
-		MATIRC[2][0] = 0; MATIRC[2][1] = 0; MATIRC[2][2] = 1;
-		
-			QQ[0][0] = correctdata2[nnn / 10][1]; QQ[0][1] = correctdata2[nnn / 10][2]; QQ[0][2] = 0;
-		Mul31(MATIRC, QQ, QQQ);
-		output[3] = -QQQ[0][0];
-		output[4] = -QQQ[0][1];
 	};
 
 	void ReCorrectionFor360Zaxis(double input[6], double output[6])

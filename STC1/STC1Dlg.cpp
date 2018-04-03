@@ -1567,7 +1567,7 @@ void CSTC1Dlg::OnBnClickedLockbutton()//滑轨解锁
 					else
 					{
 						//m_btnLock.SetColor(BLACK, GREEN);
-						lockflag = false;
+						//lockflag = false;
 						m_Lockcontrol.SetColor(BLACK, RED);
 					}
 				}
@@ -1857,11 +1857,12 @@ void CSTC1Dlg::RealAgleRealTime()
 			((CStatic*)GetDlgItem(IDC_LOCK_STA_STATIC))->SetIcon(m_hIcon);
 			SetDlgItemText(IDC_LOCK_STATIC, L"Track Lock Status:Unlock");
 			this->GetDlgItem(IDC_BUTTON6)->EnableWindow(FALSE);
+			lockflag = false;
 		}
 		else if (cstrL == "-1")
 		{
 			m_Lockcontrol.SetColor(BLACK, LLTGRAY);
-			if (lockflag == false)//确保只向一次
+			if (lockflag == false)//确保只响一次
 			{
 				lockflag = true;
 				PlaySound(_T("6531.wav"), NULL, SND_FILENAME | SND_ASYNC);

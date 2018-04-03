@@ -45,6 +45,7 @@ extern double M_COORD[6];
 
 bool IsTreatMoving ;
 double correctdatafor360[6];//用于360平台的校正
+double ALLcorrectdatafor360[36][2];//用于360平台的校正
 
 //int BeamNum;
 //CString BeamName[20];//束流名称
@@ -298,7 +299,7 @@ void CMainUI::OnBnClickedTreatmodebutton()
 		//translation.Offset[3] = M_COORD[3];
 		//translation.Offset[4] = M_COORD[4];
 		//translation.Offset[5] = M_COORD[5];
-
+		translation.CorrectionFor360Zaxis(ALLcorrectdatafor360);
 }
 
 
@@ -460,7 +461,15 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 
 	if (TTS_coordinate_value[2] >360 || TTS_coordinate_value[2] <0)
 	{
-		TTS_coordinate_value[2] == 0;
+		AfxMessageBox(_T("输入数值存在错误，请检查！"));
+		return;
+	}
+	GetDlgItemText(IDC_360EDIT, str);
+	double QQQ = _wtof(str.GetBuffer());
+	if (abs(TTS_coordinate_value[2]- QQQ)>5)
+	{
+		AfxMessageBox(_T("输入数值存在错误，请检查！"));
+		return;
 	}
 	for (size_t i = 3; i < 6; i++)
 	{
@@ -630,18 +639,18 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 			//ForZAxisCorr[3] = temp;
 			str.Format(L"%.1f", temp);
 			tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
-
-			TTS_coordinate_value[2] = TTS_coordinate_value[2]-NUM+270;
+			TTS_coordinate_value[2] -= (NUM -270);
+			/*TTS_coordinate_value[2] = TTS_coordinate_value[2]-NUM+270;
 			if (TTS_coordinate_value[2]>275 || TTS_coordinate_value[2]<265)//忘记填PVBEAM的数值
 			{
 				temp = 270-TTS_coordinate_value[2];
-				if (temp >= 180) { temp -= 360; }
+				if (temp >= 180) { temp -= 360;}
 				if (temp<-180) { temp += 360; }
 				//ForZAxisCorr[3] = temp;
 				str.Format(L"%.1f", temp);
 				tab->SetDlgItemTextW(IDC_AZ360EDIT, str); 
 				TTS_coordinate_value[2] = 270;	
-			}
+			}*/
 		}
 		tab->GetDlgItemText(IDC_AZ360EDIT, str);
 		ForZAxisCorr[2] =_wtof( str.GetBuffer());
@@ -652,7 +661,14 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 		//trans.CorrectinTTS(Correctdata, vector);
 		translation.MatrixToSolve(TTS_coordinate_value,vector,0);
 
-		translation.CorrectionFor360Zaxis(ForZAxisCorr, sssForZAxisCorr);
+		//translation.CorrectionFor360Zaxis(ForZAxisCorr, sssForZAxisCorr);
+		for (size_t i = 0; i < 6; i++)
+		{
+			sssForZAxisCorr[i] = 0;// ALLcorrectdatafor360
+		}
+		int which = (int)(TTS_coordinate_value[6]-5) / 10;
+		sssForZAxisCorr[3]=ALLcorrectdatafor360[which][0];
+		sssForZAxisCorr[4]= ALLcorrectdatafor360[which][1];
 		for (size_t i = 0; i < 6; i++)
 			 {
 			correctdatafor360[i] = sssForZAxisCorr[i];
@@ -668,9 +684,9 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 		//str.Format(L"%.3f", TransLatedata[3] + vector[3]); this->SetDlgItemTextW(IDC_AXEDIT, str);
 		//str.Format(L"%.3f", TransLatedata[4] + vector[4]); this->SetDlgItemTextW(IDC_AYEDIT, str);
 		//str.Format(L"%.3f", TransLatedata[5] + vector[5]); this->SetDlgItemTextW(IDC_AZEDIT, str);
-		str.Format(L"%.3f", vector[3]+ref[3]+ sssForZAxisCorr[3]); tab->SetDlgItemTextW(IDC_AXEDIT, str);
-		str.Format(L"%.3f",vector[4]+ref[4]+ sssForZAxisCorr[4]); tab->SetDlgItemTextW(IDC_AYEDIT, str);
-		str.Format(L"%.3f", vector[5]+ref[5]+ sssForZAxisCorr[5]); tab->SetDlgItemTextW(IDC_AZEDIT, str);
+		str.Format(L"%.3f", vector[3]+ref[3]+ correctdatafor360[3]); tab->SetDlgItemTextW(IDC_AXEDIT, str);
+		str.Format(L"%.3f",vector[4]+ref[4]+ correctdatafor360[4]); tab->SetDlgItemTextW(IDC_AYEDIT, str);
+		str.Format(L"%.3f", vector[5]+ref[5]+ correctdatafor360[5]); tab->SetDlgItemTextW(IDC_AZEDIT, str);
 
 		//str.Format(L"%.1f", 270-Correctdata[2]); this->SetDlgItemTextW(IDC_AZ360EDIT, str);
 
@@ -690,29 +706,62 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 	this->SetDlgItemTextW(IDC_AZEDIT2, L"");
 }
 
-void CMainUI::REOnBnClickedCorrbutton()//做六维校正的操作
+void CMainUI::REOnBnClickedCorrbutton()//按ctrl做六维校正的操作
 {
 	CTabCtrl *tab = (CTabCtrl*)GetParent();//获取父窗口即tab控件指针
 
-	if (TTS_coordinate_value[6]>275 || TTS_coordinate_value[6]<265)//忘记填PVBEAM的数值
+	if (TTS_coordinate_value[6] <= 275 && TTS_coordinate_value[6] >= 265)
 	{
-		double temp = 270 - TTS_coordinate_value[6];
+		str.Format(L"%.1f", 0);
+		tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
+		//GetDlgItemText(IDC_XEDIT2, str);
+		//NUM = _wtof(str.GetBuffer());
+		//ForZAxisCorr[3] = 0;
+	}
+	else if (TTS_coordinate_value[6]>275 || TTS_coordinate_value[6]<265)
+	{
+		GetDlgItemText(IDC_360EDIT, str);
+		double NUM = _wtof(str.GetBuffer());//实际的PV Beam值
+		double temp = 270 - NUM;
 		if (temp >= 180) { temp -= 360; }
 		if (temp<-180) { temp += 360; }
 		//ForZAxisCorr[3] = temp;
 		str.Format(L"%.1f", temp);
 		tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
+		TTS_coordinate_value[2] = TTS_coordinate_value[6]-(NUM - 270);
 	}
-	if (TTS_coordinate_value[6]<=275 && TTS_coordinate_value[6]>=265)//忘记填PVBEAM的数值
+	tab->GetDlgItemText(IDC_AZ360EDIT, str);
+	ForZAxisCorr[2] = _wtof(str.GetBuffer());
+
+
+	//trans.Correct3(FIXED_coordinate_value, vector);
+	//trans.init();
+	//trans.CorrectinTTS(Correctdata, vector);
+	translation.MatrixToSolve(TTS_coordinate_value, vector, 0);
+
+	//translation.CorrectionFor360Zaxis(ForZAxisCorr, sssForZAxisCorr);
+	for (size_t i = 0; i < 6; i++)
 	{
-		str.Format(L"%.1f", 0);
-		tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
+		sssForZAxisCorr[i] = 0;// ALLcorrectdatafor360
 	}
+	int which = (int)(TTS_coordinate_value[6]-5) / 10;
+	sssForZAxisCorr[3] = ALLcorrectdatafor360[which][0];
+	sssForZAxisCorr[4] = ALLcorrectdatafor360[which][1];
+	for (size_t i = 0; i < 6; i++)
+	{
+		correctdatafor360[i] = sssForZAxisCorr[i];
+	}
+
+	//GetXYCORRData(vector);
 
 
 	str.Format(L"%.3f", vector[0]); tab->SetDlgItemTextW(IDC_XEDIT, str);
 	str.Format(L"%.3f", vector[1]); tab->SetDlgItemTextW(IDC_YEDIT, str);
 	str.Format(L"%.3f", vector[2] - 270); tab->SetDlgItemTextW(IDC_ZEDIT, str);
+	//如果运用第三校正的话，以下平移数值应当不加上TransLatedata里面的值，因为这些值已经在西门子算法中加上了
+	//str.Format(L"%.3f", TransLatedata[3] + vector[3]); this->SetDlgItemTextW(IDC_AXEDIT, str);
+	//str.Format(L"%.3f", TransLatedata[4] + vector[4]); this->SetDlgItemTextW(IDC_AYEDIT, str);
+	//str.Format(L"%.3f", TransLatedata[5] + vector[5]); this->SetDlgItemTextW(IDC_AZEDIT, str);
 	str.Format(L"%.3f", vector[3] + ref[3] + sssForZAxisCorr[3]); tab->SetDlgItemTextW(IDC_AXEDIT, str);
 	str.Format(L"%.3f", vector[4] + ref[4] + sssForZAxisCorr[4]); tab->SetDlgItemTextW(IDC_AYEDIT, str);
 	str.Format(L"%.3f", vector[5] + ref[5] + sssForZAxisCorr[5]); tab->SetDlgItemTextW(IDC_AZEDIT, str);
@@ -773,11 +822,16 @@ void CMainUI::OnBnClickedTreatfinishbutton()
 		for (size_t i = 0; i < 3; i++)
 		{
 			single_move_speed_show[i] = 1;
+			ForZAxisCorr[i] = 0;
+			sssForZAxisCorr[i] = 0;
+			correctdatafor360[i] = 0;
 		}
 		for (size_t i = 3; i < 6; i++)
 		{
 			single_move_speed_show[i] = 10;
 			ForZAxisCorr[i] = 0;
+			sssForZAxisCorr[i] = 0;
+			correctdatafor360[i] = 0;
 		}
 
 		//this->GetDlgItem(IDC_CTRLBUTTON)->EnableWindow(TRUE);
@@ -1853,7 +1907,7 @@ void CMainUI::OnStnClickedStaticpexit()
 			SetDlgItemTextW(IDC_patientIDEDIT, PID);
 			this->GetDlgItem(IDC_patientIDEDIT)->EnableWindow(TRUE);
 
-			this->GetDlgItem(IDC_TREATMODEBUTTON)->EnableWindow(FALSE);
+			//this->GetDlgItem(IDC_TREATMODEBUTTON)->EnableWindow(FALSE);
 		}
 	}
 	

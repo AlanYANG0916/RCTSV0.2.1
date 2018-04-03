@@ -106,23 +106,43 @@ public:
 	afx_msg void timerout();
 	afx_msg void GetRealData(float data[6])//做xy方向的平移校正
 	{
+		if (data[3]>0.2)
+		{
+			data[3] *= 1.003;// +0.007*y;
+		}
+		else if (data[3]<-0.2)
+		{
+			data[3] *= 1.002;//+ 0.007*y;
+		}
+		if (data[4]>0.2)
+		{
+			data[4] *= 1.006;//-0.012*x;
+		}
+		else if (data[4]<-0.2)
+		{
+			data[4] *= 1.003;//-0.012*x;
+		}
 		double x = data[3]; double y = data[4];
+		data[3] = x + 0.007*y;
+		data[4] = y - 0.012*x;
+		/*double x = data[3]; double y = data[4];
 		if (x>0.2)
 		{
-			data[3] = 1.003*x+0.007*y;
+			data[3] = 1.003*x;// +0.007*y;
 		}
 		else if (x<-0.2)
 		{
-			data[3] = 1.004*x+ 0.007*y;
+			data[3] = 1.004*x;//+ 0.007*y;
 		}
 		if (y>0.2)
 		{
-			data[4] = 1.007*y-0.012*x;
+			data[4] = 1.007*y;//-0.012*x;
 		}
 		else if (y<-0.2)
 		{
-			data[4] = 1.003*y-0.012*x;
-		}
+			data[4] = 1.003*y;//-0.012*x;
+		}*/
+
 	}
 
 	afx_msg void GetXYCORRData(float data[6])//做xy方向的平移校正
