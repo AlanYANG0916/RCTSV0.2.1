@@ -123,7 +123,7 @@ public:
 			data[4] *= 1.003;//-0.012*x;
 		}
 		double x = data[3]; double y = data[4];
-		data[3] = x + 0.007*y;
+		data[3] = x + 0.007*y + 0.05;
 		data[4] = y - 0.012*x;
 		/*double x = data[3]; double y = data[4];
 		if (x>0.2)
@@ -233,4 +233,5 @@ public:
 	afx_msg void OnInputplanEditplan();
 	afx_msg void OnUserAdduser();
 	afx_msg void OnBnClickedmovebeginbutton();
+	bool IFCtrl;//判断是否做过校正
 };

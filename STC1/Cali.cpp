@@ -22,6 +22,8 @@
  extern UINT count0;     //主时钟计数器
  extern Sinmovetime sinmovetime;
  extern Mode mode;
+ extern double ALLcorrectdatafor360[36][4];//用于360平台的校正
+ extern double sssForZAxisCorr[6];//用于360平台的校正
 IMPLEMENT_DYNAMIC(CCali, CDialogEx)
 
 CCali::CCali(CWnd* pParent /*=NULL*/)
@@ -372,9 +374,11 @@ void CCali::OnBnClickedCtrlbutton2()
 {
 	UpdateData(TRUE);
 	CString str;
-	double TTS_coordinate_value[6];
+	double TTS_coordinate_value[7];
 	if (m_radiogroup2==0)//iec table top坐标系下
 	{
+
+
 		//this->GetDlgItem(IDC_CORRBUTTON)->EnableWindow(FALSE);
 		double NUM;
 		GetDlgItemText(IDC_XEDIT3, str);
@@ -384,7 +388,7 @@ void CCali::OnBnClickedCtrlbutton2()
 		NUM = _wtof(str.GetBuffer());
 		TTS_coordinate_value[1] = NUM;
 		GetDlgItemText(IDC_ZEDIT3, str);
-		NUM = _wtof(str.GetBuffer());
+		NUM = _wtof(str.GetBuffer()); TTS_coordinate_value[6] = NUM;
 		TTS_coordinate_value[2] = 270;
 		GetDlgItemText(IDC_AXEDIT3, str);
 		NUM = _wtof(str.GetBuffer());
@@ -408,19 +412,39 @@ void CCali::OnBnClickedCtrlbutton2()
 		//trans.init();
 		//trans.CorrectinTTS(Correctdata, vector);
 		Translation translation;
+		translation.CorrectionFor360Zaxis(ALLcorrectdatafor360);
 		translation.Offset[3] = M_COORD[3];
 		translation.Offset[4] = M_COORD[4];
 		translation.Offset[5] = M_COORD[5];
 		translation.MatrixToSolve(TTS_coordinate_value, vector,0);
 
 
+		for (size_t i = 0; i < 6; i++)
+		{
+			sssForZAxisCorr[i] = 0;// ALLcorrectdatafor360
+		}
+
+		if (vector[0] <= 2)
+		{
+			int which = (int)(TTS_coordinate_value[6] + 5) / 10;
+			sssForZAxisCorr[3] = ALLcorrectdatafor360[which][0];
+			sssForZAxisCorr[4] = ALLcorrectdatafor360[which][1];
+		}
+		else if (vector[0]>2)
+		{
+			int which = (int)(TTS_coordinate_value[6] + 5) / 10;
+			sssForZAxisCorr[3] = ALLcorrectdatafor360[which][2];
+			sssForZAxisCorr[4] = ALLcorrectdatafor360[which][3];
+		}
+
+
 		CTabCtrl *tab = (CTabCtrl*)GetParent();//获取父窗口即tab控件指针 
 		str.Format(L"%.3f", vector[0]); tab->SetDlgItemTextW(IDC_XEDIT, str);
 		str.Format(L"%.3f", vector[1]); tab->SetDlgItemTextW(IDC_YEDIT, str);
 		str.Format(L"%.3f", vector[2] - 270); tab->SetDlgItemTextW(IDC_ZEDIT, str);
-		str.Format(L"%.3f", vector[3] ); tab->SetDlgItemTextW(IDC_AXEDIT, str);
-		str.Format(L"%.3f", vector[4] ); tab->SetDlgItemTextW(IDC_AYEDIT, str);
-		str.Format(L"%.3f", vector[5] ); tab->SetDlgItemTextW(IDC_AZEDIT, str);
+		str.Format(L"%.3f", vector[3]+ sssForZAxisCorr[3]); tab->SetDlgItemTextW(IDC_AXEDIT, str);
+		str.Format(L"%.3f", vector[4]+ sssForZAxisCorr[4]); tab->SetDlgItemTextW(IDC_AYEDIT, str);
+		str.Format(L"%.3f", vector[5]+ sssForZAxisCorr[5]); tab->SetDlgItemTextW(IDC_AZEDIT, str);
 
 		GetDlgItemText(IDC_ZEDIT3, str);
 		NUM = _wtof(str.GetBuffer());

@@ -695,7 +695,7 @@ public:
 	};
 
 	//对于360°旋转台与房间Z轴偏移的校正
-	void CorrectionFor360Zaxis(double output[36][2])
+	void CorrectionFor360Zaxis(double output[36][4])
 	{
 		CString strFilePath;
 		CFile file;
@@ -705,7 +705,7 @@ public:
 			 {
 			return;
 			}
-		double correctdata2[36][3];
+		double correctdata2[36][5];
 		
 			CString result;
 		result = "";
@@ -772,6 +772,25 @@ public:
 				Mul31(MATIRC, QQ, QQQ);
 				output[i][0] = -QQQ[0][0];
 				output[i][1] = -QQQ[0][1];
+				//file.Close();
+			}
+			//在pitch下
+			for (size_t i = 0; i < 36; i++)
+			{
+				int temp;
+				temp = (27 - i) * 10; if (temp>180)
+				{
+					temp -= 360;
+				}
+				double a = temp * π / 180;
+				MATIRC[0][0] = cos(-a); MATIRC[0][1] = sin(-a); MATIRC[0][2] = 0;
+				MATIRC[1][0] = -sin(-a); MATIRC[1][1] = cos(-a); MATIRC[1][2] = 0;
+				MATIRC[2][0] = 0; MATIRC[2][1] = 0; MATIRC[2][2] = 1;
+
+				QQ[0][0] = correctdata2[i][3]; QQ[0][1] = correctdata2[i][4]; QQ[0][2] = 0;
+				Mul31(MATIRC, QQ, QQQ);
+				output[i][2] = -QQQ[0][0];
+				output[i][3] = -QQQ[0][1];
 				//file.Close();
 			}
 	};

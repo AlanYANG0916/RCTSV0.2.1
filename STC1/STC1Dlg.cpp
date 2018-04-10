@@ -20,7 +20,7 @@
 #include<ATLBASE.H>
 #include<iomanip>
 #include <io.h>
-
+#include <ctime>
 #include <hpdf.h>
 
 #include "winsock.h"    
@@ -78,7 +78,7 @@ extern CString UserName;
 extern double M_COORD[6];
 extern bool IsTreatMoving;//是否处于治疗状态运动
 int DoingTreatMoving;//是否正在运动处于治疗状态运动
-extern double correctdatafor360[6];//用于360平台的校正
+extern double sssForZAxisCorr[6];//用于360平台的校正
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialogEx
@@ -284,23 +284,54 @@ BOOL CSTC1Dlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	//添加License识别
+
+	DWORD dwCopied = 0;
+	CString szKeyValue;
+	CString m_szFileName = L"./license/License.ini";
+	dwCopied = ::GetPrivateProfileString(L"LimitTime", L"deadtime", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	double data = _wtof(szKeyValue.GetBuffer());
+	szKeyValue.ReleaseBuffer();
+
+
+	CTime tm; tm = CTime::GetCurrentTime();
+	int year = tm.GetYear(); int month = tm.GetMonth(); int day = tm.GetDay(); int hour = tm.GetHour(); int minute = tm.GetMinute(); int second = tm.GetSecond();///分钟
+	CString time=L"";
+	if (month>=10 && day>=10)
+	{
+		time.Format(L"%d%d%d", year, month, day);
+	}
+	else if (month>=10 && day<10)
+	{
+		time.Format(L"%d%d0%d", year, month, day);
+	}
+	else if (month<10 && day>=10)
+	{
+		time.Format(L"%d0%d%d", year, month, day);
+	}
+	else if (month<10 && day<10)
+	{
+		time.Format(L"%d0%d0%d", year, month, day);
+	}
+	if (_wtof(time.GetBuffer())-data>0)
+	{
+		MessageBox(L"Use time beyond the software license,Please contact super sense company!");
+		return FALSE;
+	}
+	else if (!dwCopied)
+	{
+		MessageBox(L"Missing license file,Please contact super sense company!");
+		return FALSE;
+	}
+
 
 	CLogin m_login;
 	if (m_login.DoModal()==IDOK)
 	{
-
-	}
-	else
-	{
-		CDialogEx::OnCancel();
-		return FALSE;
-	}
-
-	//SetDlgItemText(IDD_STC1_DIALOG,);
-	SetWindowText(L"RCTS v0.2   UserName: " + UserName + "  Permission: " + permission);
-	menu.LoadMenu(IDR_MENU1);  //IDR_MENU1为菜单栏ID号  
-	SetMenu(&menu);
-	//menu.Detach();
+		SetWindowText(L"RCTS v0.2   UserName: " + UserName + "  Permission: " + permission);
+		menu.LoadMenu(IDR_MENU1);  //IDR_MENU1为菜单栏ID号  
+		SetMenu(&menu);
+		//menu.Detach();
 
 		m_tab.InsertItem(0, L"Treatment Mode");  //添加参数一选项卡    
 		m_tab.InsertItem(1, L"QA Mode");  //添加参数二选项卡   
@@ -329,24 +360,33 @@ BOOL CSTC1Dlg::OnInitDialog()
 		}
 
 
-	CRect rs;    
-	m_tab.GetClientRect(&rs);    
-//调整子对话框在父窗口中的位置    
-	rs.top+=1;     
-	rs.bottom-=10;     
-	rs.left+=300;    //520 
-	rs.right+=500;  //540
+		CRect rs;
+		m_tab.GetClientRect(&rs);
+		//调整子对话框在父窗口中的位置    
+		rs.top += 1;
+		rs.bottom -= 10;
+		rs.left += 300;    //520 
+		rs.right += 500;  //540
 
-//设置子对话框尺寸并移动到指定位置    
-	m_mainui.MoveWindow(&rs);    
-	m_cali.MoveWindow(&rs);    
-	m_corr.MoveWindow(&rs); 
-	m_mainui.ShowWindow(true);    
-	m_cali.ShowWindow(false);    
-	m_corr.ShowWindow(false); 
-	m_tab.SetCurSel(0);
+						  //设置子对话框尺寸并移动到指定位置    
+		m_mainui.MoveWindow(&rs);
+		m_cali.MoveWindow(&rs);
+		m_corr.MoveWindow(&rs);
+		m_mainui.ShowWindow(true);
+		m_cali.ShowWindow(false);
+		m_corr.ShowWindow(false);
+		m_tab.SetCurSel(0);
 
-	ChangeUI();
+		ChangeUI();
+	}
+	else
+	{
+		CDialogEx::OnCancel();
+		return FALSE;
+	}
+
+	//SetDlgItemText(IDD_STC1_DIALOG,);
+	
 
 	//m_hAccel = ::LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_ACCELERATOR1));
 
@@ -371,7 +411,7 @@ void CSTC1Dlg::OnSysCommand(UINT nID, LPARAM lParam)
 	{
 		if (ChairMode == TreatmentMode)
 		{
-			AfxMessageBox(_T("当前为治疗模式，若想关闭软件，请先结束治疗"));
+			AfxMessageBox(_T("For the current treatment mode, if you want to shut down the software, please finish the treatment first."));
 			return;
 		}
 		if (IDYES == MessageBox(_T("Do you want to exit program？Please confirm that the current device is in a safe state"), _T("WARNING!"), MB_YESNO))
@@ -386,7 +426,7 @@ void CSTC1Dlg::OnSysCommand(UINT nID, LPARAM lParam)
 			}
 			if (((m_dof.FromDOFBuf.nDOFStatus!= 55)&& (!canclose)&& EthLinkOK))
 			{
-				AfxMessageBox(_T("当前治疗椅状态不能关闭！"));
+				AfxMessageBox(_T("Current treatment chair status ,software cannot be closed!！"));
 				return;
 			}
 			CString m_szFileName = L"./SettingsINI.ini";
@@ -461,7 +501,7 @@ void CSTC1Dlg::OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	if (ChairMode == TreatmentMode)
 	{
-		AfxMessageBox(_T("当前状态不允许切换至模式，如需要切换，请先结束当前治疗流程！"));
+		AfxMessageBox(_T("The current state is not allowed to switch mode. If you need to switch, please finish the current treatment process first!"));
 		return;
 	}
 	int CurSel = m_tab.GetCurSel();    
@@ -1936,14 +1976,14 @@ void CSTC1Dlg::RealAgleRealTime()
 	dwCopied = ::GetPrivateProfileString(L"360Correction", L"Y", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
 	offset[4] = _wtof(szKeyValue.GetBuffer());
 	szKeyValue.ReleaseBuffer();
-	if (ChairMode==TreatmentMode)
-	{
+	//if (ChairMode==TreatmentMode)
+	//{
 		//translation.CorrectionFor360Zaxis(offset, reoffset);
-		for (size_t i = 0; i < 6; i++)
-			 {
-			reoffset[i] = correctdatafor360[i];
-			}
+	for (size_t i = 0; i < 6; i++)
+	{
+		reoffset[i] = sssForZAxisCorr[i];
 	}
+	//}
 
 	double vector2[6];
 	float re_attitude_for_show2[6];
@@ -1956,11 +1996,11 @@ void CSTC1Dlg::RealAgleRealTime()
 	translation.ReMatrixToSolve(re_attitude_for_show2, vector2);
 
 
-	if (vector2[0]<0)
+	if (vector2[0]<-0.05)
 	{
 		vector2[0] += 360;
 	}
-	if (vector2[1]<0)
+	if (vector2[1]<-0.05)
 	{
 		vector2[1] += 360;
 	}
@@ -2103,62 +2143,72 @@ CString  CSTC1Dlg::ToLdata(CString Pdata)
 
 void CSTC1Dlg::ActionTip()
 {
-	JudgeAction();
-	if (ChairMode != TreatmentMode)
-		 {
-		for (size_t i = 0; i < 6; i++)
+	if (::GetKeyState(VK_CONTROL) < 0)//必须至少要按下一次才能判断
+	{
+		IFCtrl = true;
+	}
+	if (IFCtrl)
+	{
+		JudgeAction();
+		if (ChairMode != TreatmentMode)
+		{
+			for (size_t i = 0; i < 6; i++)
 			{
-			IfMoveInPlace[i] = 1;
+				IfMoveInPlace[i] = 1;
 			}
 		}
-	if (::GetKeyState(VK_CONTROL) < 0)//按下
-	{
-		//AfxMessageBox(L"Ctrl 键按下了。");
-		if (DoingTreatMoving == 0)
+		if (::GetKeyState(VK_CONTROL) < 0)//按下
 		{
-			DoingTreatMoving = 1;
-			m_mainui.REOnBnClickedCorrbutton();
+			//AfxMessageBox(L"Ctrl 键按下了。");
+			if (DoingTreatMoving == 0)
+			{
+				DoingTreatMoving = 1;
+				m_mainui.REOnBnClickedCorrbutton();
+			}
 		}
-	}
-	else//未按下
-	{
-		//AfxMessageBox(L"Ctrl 键没按下。");
-		if (DoingTreatMoving==1)
+		else//未按下
 		{
-			DoingTreatMoving = 0;
-			OnBnClickedEstopbutton();
-			Sleep(200);
-			OnBnClickedEstopbutton();
+			//AfxMessageBox(L"Ctrl 键没按下。");
+			if (DoingTreatMoving == 1)
+			{
+				DoingTreatMoving = 0;
+				OnBnClickedEstopbutton();
+				Sleep(200);
+				OnBnClickedEstopbutton();
+			}
 		}
-	}
 
-	if (IfMoveInPlace[0]==1&& IfMoveInPlace[1] == 1 && IfMoveInPlace[2] == 1 && 
-		IfMoveInPlace[3] == 1 && IfMoveInPlace[4] == 1 && IfMoveInPlace[5] == 1)
-	{
-		HICON m_hIcon = AfxGetApp()->LoadIcon(IDI_ICONGREEN);
-		((CStatic*)GetDlgItem(IDC_POSLOCK_STA_STATIC))->SetIcon(m_hIcon);
-		SetDlgItemText(IDC_POS_STATIC, L"Postrue Lock Status : Locking");
-		KillTimer(2);
-		str.Format(L"%.1f", TTS_coordinate_value[0]); m_mainui.SetDlgItemTextW(IDC_XEDIT2, str);
-		str.Format(L"%.1f", TTS_coordinate_value[1]); m_mainui.SetDlgItemTextW(IDC_YEDIT2, str);
-		double A360Z;
-		GetDlgItemText(IDC_AZ360EDIT, str);  A360Z = _wtof(str.GetBuffer());
-		double NNN = TTS_coordinate_value[2] - A360Z;
-		str.Format(L"%.1f", TTS_coordinate_value[6]); m_mainui.SetDlgItemTextW(IDC_ZEDIT2, str);
-		str.Format(L"%.2f", TTS_coordinate_value[3] / 10); m_mainui.SetDlgItemTextW(IDC_AXEDIT2, str);
-		str.Format(L"%.2f", TTS_coordinate_value[4] / 10); m_mainui.SetDlgItemTextW(IDC_AYEDIT2, str);
-		str.Format(L"%.2f", TTS_coordinate_value[5] / 10); m_mainui.SetDlgItemTextW(IDC_AZEDIT2, str);
-		//IsTreatMoving = false;
-		DoingTreatMoving = 0;
+		if (IfMoveInPlace[0] == 1 && IfMoveInPlace[1] == 1 && IfMoveInPlace[2] == 1 &&
+			IfMoveInPlace[3] == 1 && IfMoveInPlace[4] == 1 && IfMoveInPlace[5] == 1)
+		{
+			HICON m_hIcon = AfxGetApp()->LoadIcon(IDI_ICONGREEN);
+			((CStatic*)GetDlgItem(IDC_POSLOCK_STA_STATIC))->SetIcon(m_hIcon);
+			SetDlgItemText(IDC_POS_STATIC, L"Postrue Lock Status : Locking");
+			KillTimer(2); IFCtrl = false;
+			/*str.Format(L"%.1f", TTS_coordinate_value[0]); m_mainui.SetDlgItemTextW(IDC_XEDIT2, str);
+			str.Format(L"%.1f", TTS_coordinate_value[1]); m_mainui.SetDlgItemTextW(IDC_YEDIT2, str);
+			double A360Z;
+			GetDlgItemText(IDC_AZ360EDIT, str);  A360Z = _wtof(str.GetBuffer());
+			double NNN = TTS_coordinate_value[2] - A360Z;
+			str.Format(L"%.1f", TTS_coordinate_value[6]); m_mainui.SetDlgItemTextW(IDC_ZEDIT2, str);
+			str.Format(L"%.2f", TTS_coordinate_value[3] / 10); m_mainui.SetDlgItemTextW(IDC_AXEDIT2, str);
+			str.Format(L"%.2f", TTS_coordinate_value[4] / 10); m_mainui.SetDlgItemTextW(IDC_AYEDIT2, str);
+			str.Format(L"%.2f", TTS_coordinate_value[5] / 10); m_mainui.SetDlgItemTextW(IDC_AZEDIT2, str);*/
+			//IsTreatMoving = false;
+			DoingTreatMoving = 0;
+		}
+		else
+		{
+			//IsTreatMoving = true;
+			HICON m_hIcon = AfxGetApp()->LoadIcon(IDI_ICONRED);
+			((CStatic*)GetDlgItem(IDC_POSLOCK_STA_STATIC))->SetIcon(m_hIcon);
+			SetDlgItemText(IDC_POS_STATIC, L"Postrue Lock Status : Moving");
+		}
 	}
 	else
 	{
-		//IsTreatMoving = true;
-		HICON m_hIcon = AfxGetApp()->LoadIcon(IDI_ICONRED);
-		((CStatic*)GetDlgItem(IDC_POSLOCK_STA_STATIC))->SetIcon(m_hIcon);
-		SetDlgItemText(IDC_POS_STATIC, L"Postrue Lock Status : Moving");
+		return;
 	}
-	
 }
 void CSTC1Dlg::JudgeAction()
 {
@@ -2170,33 +2220,31 @@ void CSTC1Dlg::JudgeAction()
 	m_mainui.GetDlgItemText(IDC_RAXEDIT2, str); NBB[3] = _wtof(str.GetBuffer())*10;
 	m_mainui.GetDlgItemText(IDC_RAYEDIT2, str); NBB[4] = _wtof(str.GetBuffer())*10;
 	m_mainui.GetDlgItemText(IDC_RAZEDIT2, str); NBB[5] = _wtof(str.GetBuffer())*10;
-	for (size_t i = 0; i < 6; i++)
+	for (size_t i = 0; i < 3; i++)
 	{
 		if (i==2)
 		{
-			if ((abs(NBB[i] - TTS_coordinate_value[6]) < 0.3) || (abs(NBB[i] - 360 - TTS_coordinate_value[6]) < 0.3))
+			if ((abs(NBB[i] - TTS_coordinate_value[6]) < 0.15) || (abs(NBB[i] - 360 - TTS_coordinate_value[6]) < 0.15))
 			{
 				IfMoveInPlace[i] = 1;
 			}
 			else { IfMoveInPlace[i] = 0; }
-			/*double A360Z;
-			GetDlgItemText(IDC_AZ360EDIT, str);  A360Z = _wtof(str.GetBuffer());
-			double NNN = TTS_coordinate_value[2] - A360Z;
-			if (NNN>360){NNN -= 360;}
-			if (NNN<0) { NNN += 360; }
-			if(abs(NNN-NBB[2])<0.6)
-			{
-				IfMoveInPlace[i] = 1;
-			}
-			else { IfMoveInPlace[i] = 0; }*/
 		}
 		else {
-			if ((abs( NBB[i]- TTS_coordinate_value[i]) < 0.3)|| (abs(NBB[i]-360 - TTS_coordinate_value[i]) < 0.3))
+			if ((abs( NBB[i]- TTS_coordinate_value[i]) < 0.15)|| (abs(NBB[i]-360 - TTS_coordinate_value[i]) < 0.15))
 			{
 				IfMoveInPlace[i] = 1;
 			}
 			else { IfMoveInPlace[i] = 0; }
 		}
+	}
+	for (size_t i = 3; i < 6; i++)
+	{
+			if ((abs(NBB[i] - TTS_coordinate_value[i]) < 0.3) || (abs(NBB[i] - 360 - TTS_coordinate_value[i]) < 0.3))
+			{
+				IfMoveInPlace[i] = 1;
+			}
+			else { IfMoveInPlace[i] = 0; }
 	}
 	//return 1;
 }
@@ -2527,7 +2575,7 @@ void CSTC1Dlg::OnMenuExit()
 		}
 		if (((m_dof.FromDOFBuf.nDOFStatus != 55) && (!canclose) && EthLinkOK))
 		{
-			AfxMessageBox(_T("当前治疗椅状态不能关闭！"));
+			AfxMessageBox(_T("Current treatment chair status ,software cannot be closed!"));
 			return;
 		}
 		CString m_szFileName = L"./SettingsINI.ini";

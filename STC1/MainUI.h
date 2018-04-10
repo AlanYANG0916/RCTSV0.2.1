@@ -203,5 +203,5 @@ public:
 		 afx_msg void OnBnClickedButton3();
 
 		 double vector[6];
-		 double sssForZAxisCorr[6];
+
 };

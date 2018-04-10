@@ -45,8 +45,8 @@ extern double M_COORD[6];
 
 bool IsTreatMoving ;
 double correctdatafor360[6];//用于360平台的校正
-double ALLcorrectdatafor360[36][2];//用于360平台的校正
-
+double ALLcorrectdatafor360[36][4];//用于360平台的校正
+double sssForZAxisCorr[6];
 //int BeamNum;
 //CString BeamName[20];//束流名称
 //CString BeamTime[20];//束流应用时间
@@ -356,13 +356,7 @@ void CMainUI::OnBnClickedAlignerbutton()//初始化坐标系
 
 void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 {
-	GetDlgItemText(IDC_XEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
-	GetDlgItemText(IDC_YEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
-	GetDlgItemText(IDC_ZEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
-	GetDlgItemText(IDC_AXEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
-	GetDlgItemText(IDC_AYEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
-	GetDlgItemText(IDC_AZEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
-	
+
 	translation.Offset[3] = M_COORD[3];
 	translation.Offset[4] = M_COORD[4];
 	translation.Offset[5] = M_COORD[5];
@@ -374,36 +368,61 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 
 										   //this->GetDlgItem(IDC_CORRBUTTON)->EnableWindow(FALSE);
 	double NUM;
-	double ifRefresh=false;
-	GetDlgItemText(IDC_XEDIT2, str);
-	NUM = _wtof(str.GetBuffer());
-	TTS_coordinate_value[0] = NUM; 
+	double ifRefresh = false;
+	GetDlgItemText(IDC_XEDIT2, str); 
+	if (str != "") 
+	{
+		NUM = _wtof(str.GetBuffer());
+		TTS_coordinate_value[0] = NUM;
+	}
 	GetDlgItemText(IDC_YEDIT2, str);
-	NUM = _wtof(str.GetBuffer());
-	TTS_coordinate_value[1] = NUM;
-
+	if (str != "")
+	{
+		NUM = _wtof(str.GetBuffer());
+		TTS_coordinate_value[1] = NUM;
+	}
 	GetDlgItemText(IDC_ZEDIT2, str);
-	NUM = _wtof(str.GetBuffer());
-	TTS_coordinate_value[2] = NUM; TTS_coordinate_value[6] = TTS_coordinate_value[2];
+	if (str != "")
+	{
+		NUM = _wtof(str.GetBuffer());
+		TTS_coordinate_value[2] = NUM;
+	}
+	TTS_coordinate_value[6] = TTS_coordinate_value[2];
 	GetDlgItemText(IDC_AXEDIT2, str);
 	NUM = _wtof(str.GetBuffer());
-	TTS_coordinate_value[3] = NUM * 10;//从厘米转为毫米
-	GetDlgItemText(IDC_AYEDIT2, str);
-	NUM = _wtof(str.GetBuffer());
-	TTS_coordinate_value[4] = NUM * 10;
+	if (str != "")
+	{
+		NUM = _wtof(str.GetBuffer());
+		TTS_coordinate_value[3] = NUM*10;
+	}
+	if (str != "")
+	{
+		NUM = _wtof(str.GetBuffer());
+		TTS_coordinate_value[4] = NUM*10;
+	}
 	GetDlgItemText(IDC_AZEDIT2, str);
-	NUM = _wtof(str.GetBuffer());
-	TTS_coordinate_value[5] = NUM * 10;
+	if (str != "")
+	{
+		NUM = _wtof(str.GetBuffer());
+		TTS_coordinate_value[5] = NUM*10;
+	}
+
+	GetDlgItemText(IDC_XEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
+	GetDlgItemText(IDC_YEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
+	GetDlgItemText(IDC_ZEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
+	GetDlgItemText(IDC_AXEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
+	GetDlgItemText(IDC_AYEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
+	GetDlgItemText(IDC_AZEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
 
 	//在TTS中限位
 	if ((TTS_coordinate_value[0]>360) || (TTS_coordinate_value[1]>360) || (TTS_coordinate_value[2]>360))
 	{
-		AfxMessageBox(_T("输入数值存在错误，请检查！"));
+		AfxMessageBox(_T("There is an error in the input value, please check！"));
 		return;
 	}
 	if ((TTS_coordinate_value[0]<0) || (TTS_coordinate_value[1]<0) || (TTS_coordinate_value[2]<0))
 	{
-		AfxMessageBox(_T("输入数值存在错误，请检查！"));
+		AfxMessageBox(_T("There is an error in the input value, please check！"));
 		return;
 	}
 	if ((TTS_coordinate_value[0]-360)>-60)
@@ -461,16 +480,26 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 
 	if (TTS_coordinate_value[2] >360 || TTS_coordinate_value[2] <0)
 	{
-		AfxMessageBox(_T("输入数值存在错误，请检查！"));
+		AfxMessageBox(_T("There is an error in the input value, please check！"));
 		return;
 	}
 	GetDlgItemText(IDC_360EDIT, str);
 	double QQQ = _wtof(str.GetBuffer());
-	if (abs(TTS_coordinate_value[2]- QQQ)>5)
+
+	if (abs(TTS_coordinate_value[2]- QQQ)<10)
 	{
-		AfxMessageBox(_T("输入数值存在错误，请检查！"));
+
+	}
+	else if (abs(TTS_coordinate_value[2] - abs(QQQ - 360))<10)
+	{
+
+	}
+	else
+	{
+		AfxMessageBox(_T("There is an error in the input value, please check!"));
 		return;
 	}
+
 	for (size_t i = 3; i < 6; i++)
 	{
 		if (TTS_coordinate_value[i] > ULimitInTTS[i])
@@ -624,18 +653,37 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 		if (TTS_coordinate_value[2]<=275&& TTS_coordinate_value[2]>=265)
 		{
 			str.Format(L"%.1f", 0);
-			tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
+			tab->SetDlgItemTextW(IDC_AZ360EDIT, L"0");
 			//GetDlgItemText(IDC_XEDIT2, str);
 			//NUM = _wtof(str.GetBuffer());
 			//ForZAxisCorr[3] = 0;
 		}
 		else if (TTS_coordinate_value[2]>275 || TTS_coordinate_value[2]<265)
 		{
+			tab->GetDlgItemText(IDC_RAZ360EDIT, str);
+			double rrr= _wtof(str.GetBuffer());//目前360旋转台的实际位置
+
 			GetDlgItemText(IDC_360EDIT, str);
 			NUM = _wtof(str.GetBuffer());//实际的PV Beam值
 			double temp = 270 - NUM;
-			if (temp>=180){temp -= 360;}
-			if (temp<-180){temp += 360;}
+			if (temp >= 180) { temp -= 360; }
+			if (temp<-180) { temp += 360; }
+			if (abs(180- abs(rrr))<40)//实际位置在70-110的区间内
+			{
+				if (abs(180 - abs(temp))<15)//目标位置在75-105的区间内
+				{
+					if (temp - rrr>90)
+					{
+						int tempp=temp;
+						temp = -(360-abs(tempp));
+					}
+				}
+			}
+			else
+			{
+
+			}
+
 			//ForZAxisCorr[3] = temp;
 			str.Format(L"%.1f", temp);
 			tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
@@ -666,9 +714,19 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 		{
 			sssForZAxisCorr[i] = 0;// ALLcorrectdatafor360
 		}
-		int which = (int)(TTS_coordinate_value[6]-5) / 10;
-		sssForZAxisCorr[3]=ALLcorrectdatafor360[which][0];
-		sssForZAxisCorr[4]= ALLcorrectdatafor360[which][1];
+		if (vector[0]<=2)
+		{
+			int which = (int)(TTS_coordinate_value[6] + 5) / 10;
+			sssForZAxisCorr[3] = ALLcorrectdatafor360[which][0];
+			sssForZAxisCorr[4] = ALLcorrectdatafor360[which][1];
+		}
+		else if(vector[0]>2)
+		{
+			int which = (int)(TTS_coordinate_value[6] + 5) / 10;
+			sssForZAxisCorr[3] = ALLcorrectdatafor360[which][2];
+			sssForZAxisCorr[4] = ALLcorrectdatafor360[which][3];
+		}
+		
 		for (size_t i = 0; i < 6; i++)
 			 {
 			correctdatafor360[i] = sssForZAxisCorr[i];
@@ -710,28 +768,47 @@ void CMainUI::REOnBnClickedCorrbutton()//按ctrl做六维校正的操作
 {
 	CTabCtrl *tab = (CTabCtrl*)GetParent();//获取父窗口即tab控件指针
 
-	if (TTS_coordinate_value[6] <= 275 && TTS_coordinate_value[6] >= 265)
+	/*if (TTS_coordinate_value[6] <= 275 && TTS_coordinate_value[6] >= 265)
 	{
 		str.Format(L"%.1f", 0);
-		tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
+		tab->SetDlgItemTextW(IDC_AZ360EDIT, L"0");
 		//GetDlgItemText(IDC_XEDIT2, str);
 		//NUM = _wtof(str.GetBuffer());
 		//ForZAxisCorr[3] = 0;
 	}
-	else if (TTS_coordinate_value[6]>275 || TTS_coordinate_value[6]<265)
+
+	else if (TTS_coordinate_value[2]>275 || TTS_coordinate_value[2]<265)
 	{
+		tab->GetDlgItemText(IDC_RAZ360EDIT, str);
+		double rrr = _wtof(str.GetBuffer());//目前360旋转台的实际位置
+
 		GetDlgItemText(IDC_360EDIT, str);
 		double NUM = _wtof(str.GetBuffer());//实际的PV Beam值
 		double temp = 270 - NUM;
 		if (temp >= 180) { temp -= 360; }
 		if (temp<-180) { temp += 360; }
-		//ForZAxisCorr[3] = temp;
+		if (abs(180 - abs(rrr))<40)//实际位置在70-110的区间内
+		{
+			if (abs(180 - abs(temp))<15)//目标位置在75-105的区间内
+			{
+				if (temp - rrr>90)
+				{
+					int tempp = temp;
+					temp = -(360 - abs(tempp));
+				}
+			}
+		}
+		else
+		{
+
+		}
 		str.Format(L"%.1f", temp);
 		tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
-		TTS_coordinate_value[2] = TTS_coordinate_value[6]-(NUM - 270);
+		TTS_coordinate_value[2] -= (NUM - 270);
+
 	}
 	tab->GetDlgItemText(IDC_AZ360EDIT, str);
-	ForZAxisCorr[2] = _wtof(str.GetBuffer());
+	ForZAxisCorr[2] = _wtof(str.GetBuffer());*/
 
 
 	//trans.Correct3(FIXED_coordinate_value, vector);
@@ -747,17 +824,29 @@ void CMainUI::REOnBnClickedCorrbutton()//按ctrl做六维校正的操作
 	int which = (int)(TTS_coordinate_value[6]-5) / 10;
 	sssForZAxisCorr[3] = ALLcorrectdatafor360[which][0];
 	sssForZAxisCorr[4] = ALLcorrectdatafor360[which][1];
+
 	for (size_t i = 0; i < 6; i++)
 	{
-		correctdatafor360[i] = sssForZAxisCorr[i];
+		sssForZAxisCorr[i] = 0;// ALLcorrectdatafor360
 	}
-
+	if (vector[0] <= 2)
+	{
+		int which = (int)(TTS_coordinate_value[6] + 5) / 10;
+		sssForZAxisCorr[3] = ALLcorrectdatafor360[which][0];
+		sssForZAxisCorr[4] = ALLcorrectdatafor360[which][1];
+	}
+	else if (vector[0]>2)
+	{
+		int which = (int)(TTS_coordinate_value[6] + 5) / 10;
+		sssForZAxisCorr[3] = ALLcorrectdatafor360[which][2];
+		sssForZAxisCorr[4] = ALLcorrectdatafor360[which][3];
+	}
 	//GetXYCORRData(vector);
 
 
-	str.Format(L"%.3f", vector[0]); tab->SetDlgItemTextW(IDC_XEDIT, str);
-	str.Format(L"%.3f", vector[1]); tab->SetDlgItemTextW(IDC_YEDIT, str);
-	str.Format(L"%.3f", vector[2] - 270); tab->SetDlgItemTextW(IDC_ZEDIT, str);
+	//str.Format(L"%.3f", vector[0]); tab->SetDlgItemTextW(IDC_XEDIT, str);
+	//str.Format(L"%.3f", vector[1]); tab->SetDlgItemTextW(IDC_YEDIT, str);
+	//str.Format(L"%.3f", vector[2] - 270); tab->SetDlgItemTextW(IDC_ZEDIT, str);
 	//如果运用第三校正的话，以下平移数值应当不加上TransLatedata里面的值，因为这些值已经在西门子算法中加上了
 	//str.Format(L"%.3f", TransLatedata[3] + vector[3]); this->SetDlgItemTextW(IDC_AXEDIT, str);
 	//str.Format(L"%.3f", TransLatedata[4] + vector[4]); this->SetDlgItemTextW(IDC_AYEDIT, str);
@@ -871,6 +960,9 @@ void CMainUI::OnBnClickedTreatfinishbutton()
 			dwCopied = ::GetPrivateProfileString(L"StepOn", L"roll", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
 			stepnum = _wtof(szKeyValue.GetBuffer());
 			str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_YEDIT, str);
+			dwCopied = ::GetPrivateProfileString(L"StepOn", L"iso", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+			stepnum = _wtof(szKeyValue.GetBuffer());
+			str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_ZEDIT, str);
 			dwCopied = ::GetPrivateProfileString(L"StepOn", L"LeftRight", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
 			stepnum = _wtof(szKeyValue.GetBuffer());
 			str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_AXEDIT, str);
