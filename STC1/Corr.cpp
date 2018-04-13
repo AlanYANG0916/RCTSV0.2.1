@@ -55,9 +55,9 @@ void CCorr::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_REFYEDIT, RefPoint[1]);
 	DDX_Text(pDX, IDC_REFZEDIT, RefPoint[2]);
 
-	DDX_Text(pDX, IDC_CORRXEDIT, CORR[0]);
-	DDX_Text(pDX, IDC_CORRYEDIT, CORR[1]);
-	DDX_Text(pDX, IDC_CORRZEDIT, CORR[2]);
+	//DDX_Text(pDX, IDC_CORRXEDIT, CORR[0]);
+	//DDX_Text(pDX, IDC_CORRYEDIT, CORR[1]);
+	//DDX_Text(pDX, IDC_CORRZEDIT, CORR[2]);
 
 	DDX_Text(pDX, IDC_COORDAXEDIT, M_COORD[3]);
 	DDX_Text(pDX, IDC_COORDAYEDIT, M_COORD[4]);
@@ -142,14 +142,14 @@ void CCorr::ReadConfig()
 	dwCopied = ::GetPrivateProfileString(L"ReferencePoint", L"vert", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
 	RefPoint[2] = _wtof(szKeyValue.GetBuffer());
 
-	dwCopied = ::GetPrivateProfileString(L"360Correction", L"X", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	/*dwCopied = ::GetPrivateProfileString(L"360Correction", L"X", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
 	CORR[0] = _wtof(szKeyValue.GetBuffer());
 	szKeyValue.ReleaseBuffer();
 	dwCopied = ::GetPrivateProfileString(L"360Correction", L"Y", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
 	CORR[1] = _wtof(szKeyValue.GetBuffer());
 	szKeyValue.ReleaseBuffer();
 	dwCopied = ::GetPrivateProfileString(L"360Correction", L"Z", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
-	CORR[2] = _wtof(szKeyValue.GetBuffer());
+	CORR[2] = _wtof(szKeyValue.GetBuffer());*/
 
 
 	dwCopied = ::GetPrivateProfileString(L"Translation", L"X", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
@@ -220,12 +220,12 @@ void CCorr::OnBnClickedChangemotionrangebutton()
 	 szKeyValue.Format(L"%.2f", RefPoint[2]);
 	 ::WritePrivateProfileString(L"ReferencePoint", L"vert", szKeyValue.GetBuffer(MAX_PATH), m_szFileName);
 
-	 szKeyValue.Format(L"%.2f", CORR[0]);
+	 /*szKeyValue.Format(L"%.2f", CORR[0]);
 	 ::WritePrivateProfileString(L"360Correction", L"X", szKeyValue.GetBuffer(MAX_PATH), m_szFileName);
 	 szKeyValue.Format(L"%.2f", CORR[1]);
 	 ::WritePrivateProfileString(L"360Correction", L"Y", szKeyValue.GetBuffer(MAX_PATH), m_szFileName);
 	 szKeyValue.Format(L"%.2f", CORR[2]);
-	 ::WritePrivateProfileString(L"360Correction", L"Z", szKeyValue.GetBuffer(MAX_PATH), m_szFileName);
+	 ::WritePrivateProfileString(L"360Correction", L"Z", szKeyValue.GetBuffer(MAX_PATH), m_szFileName);*/
 
 	 szKeyValue.Format(L"%.2f", M_COORD[3]);
 	 ::WritePrivateProfileString(L"Translation", L"X", szKeyValue.GetBuffer(MAX_PATH), m_szFileName);

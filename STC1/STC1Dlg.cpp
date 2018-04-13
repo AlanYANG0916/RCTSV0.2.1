@@ -188,7 +188,7 @@ CSTC1Dlg::CSTC1Dlg(CWnd* pParent /*=NULL*/)
 	CanUse = TRUE;
 	REset = false;
 	//EStop = false;
-
+	IsMoving = false;
 	maxtime = 0;
 	IfMoveGet = false;
 	for (size_t i = 0; i < 20; i++)
@@ -289,9 +289,24 @@ BOOL CSTC1Dlg::OnInitDialog()
 	DWORD dwCopied = 0;
 	CString szKeyValue;
 	CString m_szFileName = L"./license/License.ini";
+	//dwCopied = ::GetPrivateProfileString(L"LimitTime", L"deadtime", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	//double data = _wtof(szKeyValue.GetBuffer());
+	//szKeyValue.ReleaseBuffer();
+
 	dwCopied = ::GetPrivateProfileString(L"LimitTime", L"deadtime", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
-	double data = _wtof(szKeyValue.GetBuffer());
+	CString res= szKeyValue;
 	szKeyValue.ReleaseBuffer();
+
+	int dem = 0;
+	int count = res.GetLength(); double datar = 0;
+	for (size_t i = 0; i < res.GetLength(); i++)
+	{
+		//dem = dem * 10;
+		if (res[i]=='1')
+		{
+			dem += pow(2, count-i-1);
+		}
+	}
 
 
 	CTime tm; tm = CTime::GetCurrentTime();
@@ -313,7 +328,7 @@ BOOL CSTC1Dlg::OnInitDialog()
 	{
 		time.Format(L"%d0%d0%d", year, month, day);
 	}
-	if (_wtof(time.GetBuffer())-data>0)
+	if (_wtof(time.GetBuffer())- dem>0)
 	{
 		MessageBox(L"Use time beyond the software license,Please contact super sense company!");
 		return FALSE;
@@ -703,6 +718,14 @@ void CSTC1Dlg::timerout()
 		m_mainui.GetDlgItem(IDC_DOWNBUTTON)->EnableWindow(FALSE);
 		m_cali.GetDlgItem(IDC_CTRLBUTTON2)->EnableWindow(FALSE);
 	}
+	else if (IsMoving)
+	{
+		m_mainui.GetDlgItem(IDC_UPBUTTON)->EnableWindow(FALSE);
+		m_mainui.GetDlgItem(IDC_DOWNBUTTON)->EnableWindow(FALSE);
+		this->GetDlgItem(IDC_BUTTON10)->EnableWindow(FALSE);
+		this->GetDlgItem(IDC_BUTTON13)->EnableWindow(FALSE);
+		this->GetDlgItem(IDC_RESETBUTTON)->EnableWindow(FALSE);
+	}
 	else
 	{
 		if (ChairMode == NormalMode)
@@ -1027,6 +1050,15 @@ void CSTC1Dlg::timerout()
 
 void CSTC1Dlg::OnBnClickedCtrlbutton()//控制治疗椅的移动
 {
+	if (ChairMode!=TreatmentMode&&(m_nCmd!= 7))
+	{
+		IsMoving = true;
+		for (size_t i = 0; i < 6; i++)
+		{
+			IfMoveInPlace[i] = 0;
+		}
+		SetTimer(3, 100, NULL);
+	}
 	translation.Offset[3] = M_COORD[3];
 	translation.Offset[4] = M_COORD[4];
 	translation.Offset[5] = M_COORD[5];
@@ -1815,6 +1847,7 @@ void CSTC1Dlg::OnTimer(UINT_PTR nIDEvent)
 		ActionTip();
 		break;
 	case 3:
+		ActionTip2();
 		break;
 	case 4:
 		break;
@@ -1838,6 +1871,112 @@ void CSTC1Dlg::RealAgleRealTime()
 	String^ StrRegL = gcnew String("");
 	String^ StrReg = gcnew String("");
 	CString m_hShiJiJiaoDu;
+
+	Ret = PLC->CmdRead(ModbusTCP::TcpClient::PlcMemory::HR, ModbusTCP::TcpClient::DataType::INT16, 4110, 8, bRD); //写D410 地址4506
+	if (Ret == 0)
+	{
+		for (int RegSN = 0; RegSN < 8; RegSN++)
+		{
+			StrReg = bRD[RegSN]->ToString();
+			switch (RegSN)
+			{
+			case 0:
+				/*if (StrReg == "1000")
+				{
+					m_ctrlCHeckIt.SetIcon(m_hIconGreen);
+				}
+				else
+				{
+					m_ctrlCHeckIt.SetIcon(m_hIconRed);
+				}*/
+				break;
+			case 1:
+				/*if (StrReg == "1005")
+				{
+					m_ctrlZero.SetIcon(m_hIconGreen);
+				}
+				else
+				{
+					m_ctrlZero.SetIcon(m_hIconGry);
+				}*/
+				break;
+
+			case 2:
+				/*if (StrReg == "1010")
+				{
+					m_ctrlUpend.SetIcon(m_hIconGreen);
+				}
+				else
+				{
+					m_ctrlUpend.SetIcon(m_hIconGry);
+				}*/
+
+				break;
+			case 3:
+				/*if (StrReg == "1015")
+				{
+					m_ctrlDownEnd.SetIcon(m_hIconGreen);
+				}
+				else
+				{
+					m_ctrlDownEnd.SetIcon(m_hIconGry);
+				}*/
+
+
+				break;
+			case 4:
+				if (StrReg == "1020")
+				{
+					//m_ctrlSysWarning.SetIcon(m_hIconGreen);
+				}
+				else
+				{
+					MessageBox(L"System exception, please check!");
+					//m_ctrlSysWarning.SetIcon(m_hIconRed);
+				}
+				break;
+			case 5:
+				if (StrReg == "1025")
+				{
+					//m_ctrlSeverWarning.SetIcon(m_hIconGreen);
+				}
+				else
+				{
+					MessageBox(L"System exception, please check！");
+					//m_ctrlSeverWarning.SetIcon(m_hIconRed);
+				}
+				break;
+			case 6:
+				/*if (StrReg == "1030")
+				{
+					m_ctrlNum1Up.SetIcon(m_hIconGreen);
+				}
+				else
+				{
+					m_ctrlNum1Up.SetIcon(m_hIconGry);
+				}*/
+
+
+				break;
+			case 7:
+				/*if (StrReg == "1035")
+				{
+					m_ctrlNum2Up.SetIcon(m_hIconGreen);
+				}
+				else
+				{
+					m_ctrlNum2Up.SetIcon(m_hIconGry);
+				}*/
+
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+
+
 	//short Ret;
 	Ret = PLC->CmdRead(ModbusTCP::TcpClient::PlcMemory::HR, ModbusTCP::TcpClient::DataType::INT16, 5432, 1, bRD);
 	if (Ret == 0)
@@ -2210,7 +2349,37 @@ void CSTC1Dlg::ActionTip()
 		return;
 	}
 }
-void CSTC1Dlg::JudgeAction()
+
+void CSTC1Dlg::ActionTip2()
+{
+		JudgeAction2();
+		if (IfMoveInPlace[0] == 1 && IfMoveInPlace[1] == 1 && IfMoveInPlace[2] == 1 &&
+			IfMoveInPlace[3] == 1 && IfMoveInPlace[4] == 1 && IfMoveInPlace[5] == 1 )
+		{
+			HICON m_hIcon = AfxGetApp()->LoadIcon(IDI_ICONGREEN);
+			((CStatic*)GetDlgItem(IDC_POSLOCK_STA_STATIC))->SetIcon(m_hIcon);
+			SetDlgItemText(IDC_POS_STATIC, L"Postrue Lock Status : Locking");
+			KillTimer(3);
+			DoingTreatMoving = 0;
+			IsMoving = false;
+			m_mainui.GetDlgItem(IDC_UPBUTTON)->EnableWindow(TRUE);
+			m_mainui.GetDlgItem(IDC_DOWNBUTTON)->EnableWindow(TRUE);
+			this->GetDlgItem(IDC_BUTTON10)->EnableWindow(TRUE);
+		}
+		else
+		{
+			//IsTreatMoving = true;
+			HICON m_hIcon = AfxGetApp()->LoadIcon(IDI_ICONRED);
+			((CStatic*)GetDlgItem(IDC_POSLOCK_STA_STATIC))->SetIcon(m_hIcon);
+			SetDlgItemText(IDC_POS_STATIC, L"Postrue Lock Status : Moving");
+
+			m_mainui.GetDlgItem(IDC_UPBUTTON)->EnableWindow(FALSE);
+			m_mainui.GetDlgItem(IDC_DOWNBUTTON)->EnableWindow(FALSE);
+			this->GetDlgItem(IDC_BUTTON10)->EnableWindow(FALSE);
+		}
+}
+
+void CSTC1Dlg::JudgeAction()//治疗模式下的判断
 {
 	double NBB[7];
 	m_mainui.GetDlgItemText(IDC_RXEDIT2, str); NBB[0] = _wtof(str.GetBuffer());
@@ -2247,6 +2416,46 @@ void CSTC1Dlg::JudgeAction()
 			else { IfMoveInPlace[i] = 0; }
 	}
 	//return 1;
+}
+
+void CSTC1Dlg::JudgeAction2()//其他模式下的到位判断
+{
+	float NBB[6], NAA[6];
+	float R360,RR360;
+	GetDlgItemText(IDC_RXEDIT, str); NBB[0] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_RYEDIT, str); NBB[1] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_RZEDIT, str); NBB[2] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_RAXEDIT, str); NBB[3] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_RAYEDIT, str); NBB[4] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_RAZEDIT, str); NBB[5] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_RAZ360EDIT, str); R360 = _wtof(str.GetBuffer());
+
+
+	GetDlgItemText(IDC_XEDIT, str); NAA[0] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_YEDIT, str); NAA[1] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_ZEDIT, str); NAA[2] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_AXEDIT, str); NAA[3] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_AYEDIT, str); NAA[4] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_AZEDIT, str); NAA[5] = _wtof(str.GetBuffer());
+	GetDlgItemText(IDC_AZ360EDIT, str); RR360 = _wtof(str.GetBuffer());
+
+	GetRealData(NAA);
+	for (size_t i = 0; i < 6; i++)
+	{
+		if ((abs(NBB[i] - NAA[i]) < 1))
+		{
+			IfMoveInPlace[i] = 1;
+		}
+		else { IfMoveInPlace[i] = 0; }
+	}
+	if ((abs(NBB[2] - NAA[2]) < 0.15)&& (abs(R360-RR360) < 0.15))
+	{
+		IfMoveInPlace[2] = 1;
+	}
+	else
+	{
+		IfMoveInPlace[2] = 0;
+	}
 }
 
 

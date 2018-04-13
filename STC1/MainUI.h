@@ -202,6 +202,7 @@ public:
 		 //double FOR360corr[4];
 		 afx_msg void OnBnClickedButton3();
 
-		 double vector[6];
+		 double vector[6];		 
+
 
 };

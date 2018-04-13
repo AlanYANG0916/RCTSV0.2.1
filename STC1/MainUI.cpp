@@ -104,12 +104,12 @@ void CMainUI::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 
-	DDX_Text(pDX, IDC_XEDIT2, TTS_coordinate_value[0]);
+	/*DDX_Text(pDX, IDC_XEDIT2, TTS_coordinate_value[0]);
 	DDX_Text(pDX, IDC_YEDIT2, TTS_coordinate_value[1]);
 	DDX_Text(pDX, IDC_ZEDIT2, TTS_coordinate_value[2]);
 	DDX_Text(pDX, IDC_AXEDIT2, TTS_coordinate_value[3]);
 	DDX_Text(pDX, IDC_AYEDIT2, TTS_coordinate_value[4]);
-	DDX_Text(pDX, IDC_AZEDIT2, TTS_coordinate_value[5]);
+	DDX_Text(pDX, IDC_AZEDIT2, TTS_coordinate_value[5]);*/
 
 	DDX_Text(pDX, IDC_patientIDEDIT, PID);
 
@@ -300,6 +300,11 @@ void CMainUI::OnBnClickedTreatmodebutton()
 		//translation.Offset[4] = M_COORD[4];
 		//translation.Offset[5] = M_COORD[5];
 		translation.CorrectionFor360Zaxis(ALLcorrectdatafor360);
+		for (size_t i = 0; i < 6; i++)
+		{
+			TTS_coordinate_value[i] = 0;
+		}
+		TTS_coordinate_value[2] = 270;
 }
 
 
@@ -344,12 +349,12 @@ void CMainUI::OnBnClickedAlignerbutton()//初始化坐标系
 	//this->GetDlgItem(IDC_ESTOPBUTTON2)->EnableWindow(TRUE);
 	//this->GetDlgItem(IDC_LockCPositionButton)->EnableWindow(TRUE);
 
-	//str.Format(L"%.2f", DICOM_coordinate_value[0]); this->SetDlgItemTextW(IDC_XEDIT, str);
-	//str.Format(L"%.2f", DICOM_coordinate_value[1]); this->SetDlgItemTextW(IDC_YEDIT, str);
-	//str.Format(L"%.2f", DICOM_coordinate_value[2]); this->SetDlgItemTextW(IDC_ZEDIT, str);
-	//str.Format(L"%.2f", DICOM_coordinate_value[3]); this->SetDlgItemTextW(IDC_AXEDIT, str);
-	//str.Format(L"%.2f", DICOM_coordinate_value[4]); this->SetDlgItemTextW(IDC_AYEDIT, str);
-	//str.Format(L"%.2f", DICOM_coordinate_value[5]); this->SetDlgItemTextW(IDC_AZEDIT, str);
+	str.Format(L"%.1f", 0); this->SetDlgItemTextW(IDC_XEDIT2, str);
+	str.Format(L"%.1f", 0); this->SetDlgItemTextW(IDC_YEDIT2, str);
+	str.Format(L"%.1f", 270); this->SetDlgItemTextW(IDC_ZEDIT2, L"270.0");
+	str.Format(L"%.2f", 0); this->SetDlgItemTextW(IDC_AXEDIT2, str);
+	str.Format(L"%.2f", 0); this->SetDlgItemTextW(IDC_AYEDIT2, str);
+	str.Format(L"%.2f", 0); this->SetDlgItemTextW(IDC_AZEDIT2, str);
 
 }
 
@@ -389,12 +394,12 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 	}
 	TTS_coordinate_value[6] = TTS_coordinate_value[2];
 	GetDlgItemText(IDC_AXEDIT2, str);
-	NUM = _wtof(str.GetBuffer());
 	if (str != "")
 	{
 		NUM = _wtof(str.GetBuffer());
 		TTS_coordinate_value[3] = NUM*10;
 	}
+	GetDlgItemText(IDC_AYEDIT2, str);
 	if (str != "")
 	{
 		NUM = _wtof(str.GetBuffer());
@@ -407,12 +412,12 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 		TTS_coordinate_value[5] = NUM*10;
 	}
 
-	GetDlgItemText(IDC_XEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
+	/*GetDlgItemText(IDC_XEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
 	GetDlgItemText(IDC_YEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
 	GetDlgItemText(IDC_ZEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
 	GetDlgItemText(IDC_AXEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
 	GetDlgItemText(IDC_AYEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
-	GetDlgItemText(IDC_AZEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }
+	GetDlgItemText(IDC_AZEDIT2, str); if (str == "") { AfxMessageBox(_T("Can't input null data, please check your input")); return; }*/
 
 	//在TTS中限位
 	if ((TTS_coordinate_value[0]>360) || (TTS_coordinate_value[1]>360) || (TTS_coordinate_value[2]>360))
@@ -488,11 +493,29 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 
 	if (abs(TTS_coordinate_value[2]- QQQ)<10)
 	{
-
+		if (abs(TTS_coordinate_value[2] - QQQ)>2)
+		{
+			if (IDYES == MessageBox(_T("Compared with PV beam, input value is more than 2°,do you want to continue?"), _T("WARNING!"), MB_YESNO))
+			{
+			}
+			else
+			{
+				return;
+			}
+		}
 	}
 	else if (abs(TTS_coordinate_value[2] - abs(QQQ - 360))<10)
 	{
-
+	 if (abs(TTS_coordinate_value[2] - abs(QQQ - 360))>2)
+	{
+		 if (IDYES == MessageBox(_T("Compared with PV beam, input value is more than 2°,do you want to continue?"), _T("WARNING!"), MB_YESNO))
+		 {
+		 }
+		 else
+		 {
+			 return;
+		 }
+	}
 	}
 	else
 	{
@@ -522,7 +545,7 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 		return;
 	}
 
-		CLogin m_login; m_login.moveingorlogin = 1;
+	CLogin m_login; m_login.moveingorlogin = 1;
 		if (m_login.DoModal() == IDOK)
 		{
 			
@@ -821,7 +844,7 @@ void CMainUI::REOnBnClickedCorrbutton()//按ctrl做六维校正的操作
 	{
 		sssForZAxisCorr[i] = 0;// ALLcorrectdatafor360
 	}
-	int which = (int)(TTS_coordinate_value[6]-5) / 10;
+	int which = (int)(TTS_coordinate_value[6]+5) / 10;
 	sssForZAxisCorr[3] = ALLcorrectdatafor360[which][0];
 	sssForZAxisCorr[4] = ALLcorrectdatafor360[which][1];
 
@@ -844,9 +867,9 @@ void CMainUI::REOnBnClickedCorrbutton()//按ctrl做六维校正的操作
 	//GetXYCORRData(vector);
 
 
-	//str.Format(L"%.3f", vector[0]); tab->SetDlgItemTextW(IDC_XEDIT, str);
-	//str.Format(L"%.3f", vector[1]); tab->SetDlgItemTextW(IDC_YEDIT, str);
-	//str.Format(L"%.3f", vector[2] - 270); tab->SetDlgItemTextW(IDC_ZEDIT, str);
+	str.Format(L"%.3f", vector[0]); tab->SetDlgItemTextW(IDC_XEDIT, str);
+	str.Format(L"%.3f", vector[1]); tab->SetDlgItemTextW(IDC_YEDIT, str);
+	str.Format(L"%.3f", vector[2] - 270); tab->SetDlgItemTextW(IDC_ZEDIT, str);
 	//如果运用第三校正的话，以下平移数值应当不加上TransLatedata里面的值，因为这些值已经在西门子算法中加上了
 	//str.Format(L"%.3f", TransLatedata[3] + vector[3]); this->SetDlgItemTextW(IDC_AXEDIT, str);
 	//str.Format(L"%.3f", TransLatedata[4] + vector[4]); this->SetDlgItemTextW(IDC_AYEDIT, str);
@@ -1242,11 +1265,6 @@ void CMainUI::OnEnKillfocuspatientidedit()
 
 void CMainUI::LinkToESB2()
 {
-	//BasicHttpBinding();
-	//CString url = _T("http://blog.csdn.net/qq_18297675/article/details/52240231?locationNum=2&fps=1");
-	//str=GetHttpCode(url);
-	//SetDlgItemTextW(IDC_patientIDEDIT, str);
-
 	CoInitialize(NULL);//初始化com环境  
 
 	ISoapSerializerPtr Serializer;
@@ -1256,7 +1274,7 @@ void CMainUI::LinkToESB2()
 	Connector.CreateInstance(__uuidof(HttpConnector30));   //创建对象  
 
 
-	Connector->Property[_T("EndPointURL")] = _T("http://ws.webxml.com.cn//webservices/qqOnlineWebService.asmx");    //wsdl路径  
+	Connector->Property[_T("EndPointURL")] = _T("http://WebXml.com.cn/getMobileCodeInfo/WebServices/MobileCodeWS.asmx");    //wsdl路径  
 	Connector->Connect();
 
 	////   Begin  the   message.  //消息体  
@@ -1268,13 +1286,16 @@ void CMainUI::LinkToESB2()
 	Serializer->Init(_variant_t((IUnknown*)Connector->InputStream));
 
 	//   Build  the   SOAP   Message.  
-	//Serializer->StartHeader();
-	Serializer->StartEnvelope(_T("Soap"), _T("http://www.w3.org/2001/XMLSchema-instance"), _T("utf-8"));
-	Serializer->StartBody("");
-	Serializer->StartElement(_T("qqCheckOnline"), _T("http://WebXml.com.cn/"), _T("utf-8"), _T("Soap"));//函数处理
-	Serializer->StartElement(_T("qqCode"), _T(""), _T(""), _T("Soap"));
-	Serializer->WriteString("aw");          //参数处理        
-	Serializer->EndElement();
+
+	Serializer->StartEnvelope(_T("soapenv"), _T("http://schemas.xmlsoap.org/soap/envelope/"), _T("utf-8"));
+	Serializer->SoapAttribute("web", "", "http://WebXml.com.cn/", "xmlns");
+	Serializer->StartHeader("Header");
+	Serializer->EndHeader();
+	Serializer->StartBody("Body");
+	Serializer->StartElement(_T("getMobileCodeInfo"), _T(""), _T(""), _T("web"));//函数处理
+		Serializer->StartElement(_T("mobileCode"), _T(""), _T(""), _T(""));
+			Serializer->WriteString("18708115927");
+		Serializer->EndElement();
 	Serializer->EndElement();
 	Serializer->EndBody();
 	Serializer->EndEnvelope();
@@ -1283,10 +1304,10 @@ void CMainUI::LinkToESB2()
 	Reader.CreateInstance(__uuidof(SoapReader30));
 	//wprintf(_T("here"));
 	Reader->Load(_variant_t((IUnknown*)Connector->OutputStream), "");  //加载返回数据  
+																   
 																	   //   Display  the   result.  
 	MSXML2::IXMLDOMElementPtr pstr = Reader->RpcResult;
 	char buff[1024] = { 0 };
-
 	strncpy(buff, pstr->text, 1024);
 	str.Format(L"%s", buff);
 	//SetDlgItemTextW(IDC_STATIC4, str);
@@ -1331,53 +1352,59 @@ void CMainUI::LinkToESB()
 
 	Connector.CreateInstance(__uuidof(HttpConnector30));   //创建对象  
 
-
-	Connector->Property[_T("EndPointURL")] = _T("http://10.11.200.211/SHTHESB_Service/ESBService.asmx");    //wsdl路径
+	Connector->Property[_T("EndPointURL")] = _T("http://10.20.0.10:8998/chair/?wsdl");    //wsdl路径  http://10.20.0.10:8998/chair/?wsdl
 	Connector->Connect();
 
 	////   Begin  the   message.  //消息体  
-
 	Connector->BeginMessage();
 
 
 	Serializer.CreateInstance(__uuidof(SoapSerializer30));
 	Serializer->Init(_variant_t((IUnknown*)Connector->InputStream));
 
-	//   Build  the   SOAP   Message.  
-
-	Serializer->StartEnvelope(_T("ESBEnvelope"), _T("http://SHTH.ESB.TopSchemaV2"), _T("utf-8"));
-	//Serializer->StartHeader("ESBHeader");
-	//CTime tm; tm = CTime::GetCurrentTime();
-	//int year = tm.GetYear(); int month = tm.GetMonth(); int day = tm.GetDay(); int hour = tm.GetHour(); int minute = tm.GetMinute(); int second = tm.GetSecond();
-		//Serializer->StartElement(_T("HeaderControl"), _T("AppCode=\"APP097\" Password=\"sXV5vgiB\"  MessageCategory=\"SPHICB01A001\" Version=\"1\" CreateTime=\"2018-03-08 14:42:12\""), _T("utf-8"), _T("Soap"));//函数处理
-		//Serializer->EndElement();
+	Serializer->StartEnvelope(_T("soapenv"), "http://schemas.xmlsoap.org/soap/envelope/", _T("utf-8"));
+	Serializer->SoapAttribute("shth", "", "http://SHTH.ESB.ServiceProvider/", "xmlns");
+	//Serializer->StartHeader("Header");
 	//Serializer->EndHeader();
-
-	//Serializer->StartBody("ESBBody");
-		//Serializer->StartElement(_T("BodyControl"), _T("CallType=\"\""), _T("utf-8"), _T("Soap"));//函数处理
-		//Serializer->EndElement();
-		//Serializer->StartElement(_T("BusinessRequest"), _T(""), _T(""), _T("Soap"));
-		//Serializer->WriteString("![CData[]]"); //参数处理   
-		//Serializer->EndElement();
-		//Serializer->StartElement(_T("shth:getPatState"), _T(""), _T(""), _T("soapenv"));
-			//Serializer->StartElement(_T("arg0"), _T(""), _T(""), _T("Soap"));
-				//Serializer->WriteString("&lt;getpatstate patientid='20019591'/&gt;"); //参数处理   
-			//Serializer->EndElement();		
-		//Serializer->EndElement();
-	//Serializer->EndBody();
+	Serializer->StartBody(L"NONE");
+	Serializer->SoapAttribute("Body", "", "", "soapenv");  
+	//Serializer->StartBody("Body");
+		Serializer->StartElement(_T("getPatState"), _T(""), _T(""), _T("shth"));
+			Serializer->StartElement(_T("arg0"), _T(""), _T(""), _T(""));
+			GetDlgItemText(IDC_patientIDEDIT, m_report.PatientID);
+			str.Format(L"&lt;getpatstate patientid = '%s'/&gt;", m_report.PatientID);
+			//str = "&lt;getpatstate patientid='20019591'/&gt;";
+			const wchar_t* wstr = (LPCTSTR)str; 
+			char c[256] = { 0 };
+			wcstombs(c, wstr, wcslen(wstr));
+			const char* fname = c;
+			Serializer->WriteXml(fname);
+			Serializer->EndElement();
+		Serializer->EndElement();
+		Serializer->EndBody();
 	Serializer->EndEnvelope();
 	Connector->EndMessage();
 
+
+	Reader = NULL;
 	Reader.CreateInstance(__uuidof(SoapReader30));
 	//wprintf(_T("here"));
 	Reader->Load(_variant_t((IUnknown*)Connector->OutputStream), "");  //加载返回数据  
+	//SetDlgItemText(IDC_EDIT1, (const char*)Reader->RpcResult->);
+																	   
 																	   //   Display  the   result.  
 	MSXML2::IXMLDOMElementPtr pstr = Reader->RpcResult;
 	char buff[1024] = { 0 };
 
 	strncpy(buff, pstr->text, 1024);
-	str.Format(L"%s", buff);
+	CFile file2;
+	file2.Open(_T("ESBtest2.txt"), CFile::modeCreate | CFile::modeNoTruncate | CFile::modeReadWrite);
+	file2.Write(buff, 1024);
+	file2.Close();
 
+	
+	/*str.Format(L"%s", buff);
+	SetDlgItemText(IDC_EDIT1, str);
 	CString        m_HttpCode;
 	UINT           PageCode;   //CP_UTF8:65001 CP_ACP:0  转换代码用  
 	PageCode = 65001; //因为我们的网址是UTF8格式，所以用65001；
@@ -1392,18 +1419,55 @@ void CMainUI::LinkToESB()
 	MultiByteToWideChar(PageCode, 0, (LPCSTR)buff, -1, pBuffer, nBufferSize * sizeof(wchar_t));
 
 	m_HttpCode += pBuffer;
-	//m_HttpCode += "\r\n";
+
 	delete pBuffer;
 
 
-	//多余。
 	CFile file;
 	file.Open(_T("ESBtest.txt"), CFile::modeCreate | CFile::modeNoTruncate | CFile::modeReadWrite);
-	file.Write(m_HttpCode, m_HttpCode.GetLength());
-	file.Close();
+	file.Write(m_HttpCode, 2*m_HttpCode.GetLength());
+	file.Close();*/
 
 	//printf("Answer:%s\n", buff);
 	CoUninitialize();
+
+	//处理接收到的数据
+	CString result; int UsefulStringCOunt = 0;
+	for (size_t i = 0; i < 1024; i++)
+	{
+		if (buff[i]==0x3E)//">"符号
+		{
+			UsefulStringCOunt++;
+			result = "";
+		}
+		else if (buff[i] == 0x3C)//"<"符号
+		{
+			if (UsefulStringCOunt == 3)
+			{
+				m_report.PatientBirth = result;
+				str.Format(L"%s%s", L"Birth:  ", m_report.PatientBirth); SetDlgItemText(IDC_patientbirth,str);
+			}
+			if (UsefulStringCOunt == 5)
+			{
+				m_report.PatientID = result;
+				str.Format(L"%s%s", L"PatientID:  ", m_report.PatientID); SetDlgItemText(IDC_patientid, str);
+			}
+			if (UsefulStringCOunt == 7)
+			{
+				//UTF8ToGBK(result);
+				m_report.PatientName = result;
+				str.Format(L"%s%s", L"PatientName:  ", m_report.PatientName); SetDlgItemText(IDC_patientname, str);
+			}
+		}
+		else
+		{
+			result += buff[i];
+		}		
+	}
+	if (UsefulStringCOunt<4)
+	{
+		MessageBox(L"There is no information in system,please check the ID!");
+	}
 }
 
 void CMainUI::ReadConfig()
@@ -1998,8 +2062,6 @@ void CMainUI::OnStnClickedStaticpexit()
 			PID = L"Patient ID";
 			SetDlgItemTextW(IDC_patientIDEDIT, PID);
 			this->GetDlgItem(IDC_patientIDEDIT)->EnableWindow(TRUE);
-
-			//this->GetDlgItem(IDC_TREATMODEBUTTON)->EnableWindow(FALSE);
 		}
 	}
 	
@@ -2056,15 +2118,5 @@ void CMainUI::OnCancel()
 void CMainUI::OnBnClickedButton3()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	if (::GetKeyState(VK_CONTROL) < 0)
-	{
-		AfxMessageBox(L"Ctrl 键按下了。");
-		return;
-	}
-	else
-	{
-		AfxMessageBox(L"Ctrl 键没按下。");
-		return;
-	}
 	LinkToESB();
 }

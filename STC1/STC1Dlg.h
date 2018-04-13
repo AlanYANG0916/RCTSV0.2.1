@@ -108,19 +108,21 @@ public:
 	{
 		if (data[3]>0.2)
 		{
-			data[3] *= 1.003;// +0.007*y;
+			data[3] *= 1.00311;// +0.007*y;
 		}
 		else if (data[3]<-0.2)
 		{
-			data[3] *= 1.002;//+ 0.007*y;
+			data[3] *= 1.00356;//+ 0.007*y;
 		}
 		if (data[4]>0.2)
 		{
-			data[4] *= 1.006;//-0.012*x;
+			double temp = data[4];
+			data[4] = 0.00001*temp*temp + 1.0052*temp ;// 1.006745;//-0.012*x;
+
 		}
 		else if (data[4]<-0.2)
 		{
-			data[4] *= 1.003;//-0.012*x;
+			data[4] *= 1.0029587;//-0.012*x;
 		}
 		double x = data[3]; double y = data[4];
 		data[3] = x + 0.007*y + 0.05;
@@ -179,8 +181,7 @@ public:
 	CString	Data[8];		//读PLC数据存储区
 	double fangxiang;          //旋转方向标志位
 	bool LR;          //旋转方向标志位，真表示顺时针，假表示逆时针
-
-
+	bool IsMoving;//正在移动的标志
 
 	afx_msg void RealAgleRealTime();
 	afx_msg CString ToHdata(CString);
@@ -204,6 +205,8 @@ public:
 
 	afx_msg void JudgeAction();
 	afx_msg void ActionTip();
+	afx_msg void JudgeAction2();
+	afx_msg void ActionTip2();
 	afx_msg void OnBnClickedLogoutbutton();
 	afx_msg void OnBnClickedPdfbutton();
 	afx_msg void On32775();
