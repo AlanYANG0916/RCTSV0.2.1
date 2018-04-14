@@ -79,6 +79,7 @@ extern double M_COORD[6];
 extern bool IsTreatMoving;//是否处于治疗状态运动
 int DoingTreatMoving;//是否正在运动处于治疗状态运动
 extern double sssForZAxisCorr[6];//用于360平台的校正
+extern int TwoBasicMove;
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialogEx
@@ -800,6 +801,7 @@ void CSTC1Dlg::timerout()
 		}
 		else if (m_dof.FromDOFBuf.nDOFStatus == 55&& lockflag)//下降到最低并且锁定
 		{
+			IfIsGoDown = FALSE;
 			HICON m_hIcon = AfxGetApp()->LoadIcon(IDI_ICONYELLOW);
 			((CStatic*)GetDlgItem(IDC_OPE_STA_STATIC))->SetIcon(m_hIcon);
 			SetDlgItemText(IDC_OPE_STATIC, L"Operating Status : At The Lowest");
@@ -1050,15 +1052,7 @@ void CSTC1Dlg::timerout()
 
 void CSTC1Dlg::OnBnClickedCtrlbutton()//控制治疗椅的移动
 {
-	if (ChairMode!=TreatmentMode&&(m_nCmd!= 7))
-	{
-		IsMoving = true;
-		for (size_t i = 0; i < 6; i++)
-		{
-			IfMoveInPlace[i] = 0;
-		}
-		SetTimer(3, 100, NULL);
-	}
+	
 	translation.Offset[3] = M_COORD[3];
 	translation.Offset[4] = M_COORD[4];
 	translation.Offset[5] = M_COORD[5];
@@ -1227,6 +1221,10 @@ void CSTC1Dlg::OnBnClickedButton10()//平台落下
 {
 	if (IDYES == MessageBox(_T("Determine to stop the current running state and stop the device?"), _T("Notice"), MB_YESNO))
 	{
+		m_nCmd = 7;
+		ChairMode = NormalMode;
+		IfIsGoDown = TRUE;
+
 		m_tab.SetCurSel(0);
 		m_mainui.ShowWindow(true);
 		m_cali.ShowWindow(false);
@@ -1246,8 +1244,6 @@ void CSTC1Dlg::OnBnClickedButton10()//平台落下
 		this->GetDlgItem(IDC_CTRLBUTTON)->EnableWindow(FALSE);
 		this->GetDlgItem(IDC_BUTTON13)->EnableWindow(FALSE);
 	
-		m_nCmd = 7;
-		ChairMode = NormalMode;
 
 	}
 }
@@ -1266,7 +1262,7 @@ void CSTC1Dlg::OnBnClickedButton9()//开始运行
 
 			m_tab.EnableWindow(TRUE);
 			m_mainui.GetDlgItem(IDC_UPBUTTON)->EnableWindow(TRUE); m_mainui.GetDlgItem(IDC_DOWNBUTTON)->EnableWindow(TRUE);
-			m_mainui.GetDlgItem(IDC_TREATMODEBUTTON)->EnableWindow(TRUE);
+			//m_mainui.GetDlgItem(IDC_TREATMODEBUTTON)->EnableWindow(TRUE);
 			this->GetDlgItem(IDC_BUTTON9)->EnableWindow(FALSE);
 			this->GetDlgItem(IDC_TAB1)->EnableWindow(TRUE);
 			this->GetDlgItem(IDC_EStopBUTTON)->EnableWindow(TRUE);
@@ -1475,7 +1471,17 @@ void CSTC1Dlg::OnBnClickedEstopbutton()
 		{
 			single_move_speed[i] = single_move_speed_show[i] * 3 * PI;
 		}
-		OnBnClickedEnbutton();
+		//OnBnClickedEnbutton();
+		cli::array<Object ^>^ bRD = gcnew cli::array<Object ^>(1);
+		String^ StrReg = gcnew String("");
+		Ret = PLC->Bit_Set(ModbusTCP::TcpClient::PlcMemory::DQ, 2053, 0); //设置PLC M5线圈开
+		if (Ret != 0)
+		{
+			MessageBox(L"停止故障！");
+			return;
+		}
+		lockflag = true;
+		enableflag = false;
 		SetDlgItemText(IDC_EStopBUTTON, L"Em-stop\nRecovery");
 	}
 	else if (EMSTOP==true)
@@ -2352,14 +2358,49 @@ void CSTC1Dlg::ActionTip()
 
 void CSTC1Dlg::ActionTip2()
 {
+	if (::GetKeyState(VK_CONTROL) < 0)//必须至少要按下一次才能判断
+	{
+		IFCtrl = true;
+	}
+	if (IFCtrl)
+	{
+		JudgeAction2();
+		if (::GetKeyState(VK_CONTROL) < 0)//按下
+		{
+			//AfxMessageBox(L"Ctrl 键按下了。");
+			if (DoingTreatMoving == 0)
+			{
+				DoingTreatMoving = 1;
+				if (TwoBasicMove==1)
+				{
+					m_mainui.REOnBnClickedDownbutton();
+				}
+				else if (TwoBasicMove == 2)
+				{
+					m_mainui.REOnBnClickedUpbutton();
+				}
+				
+			}
+		}
+		else//未按下
+		{
+			//AfxMessageBox(L"Ctrl 键没按下。");
+			if (DoingTreatMoving == 1)
+			{
+				DoingTreatMoving = 0;
+				OnBnClickedEstopbutton();
+				Sleep(200);
+				OnBnClickedEstopbutton();
+			}
+		}
 		JudgeAction2();
 		if (IfMoveInPlace[0] == 1 && IfMoveInPlace[1] == 1 && IfMoveInPlace[2] == 1 &&
-			IfMoveInPlace[3] == 1 && IfMoveInPlace[4] == 1 && IfMoveInPlace[5] == 1 )
+			IfMoveInPlace[3] == 1 && IfMoveInPlace[4] == 1 && IfMoveInPlace[5] == 1)
 		{
 			HICON m_hIcon = AfxGetApp()->LoadIcon(IDI_ICONGREEN);
 			((CStatic*)GetDlgItem(IDC_POSLOCK_STA_STATIC))->SetIcon(m_hIcon);
 			SetDlgItemText(IDC_POS_STATIC, L"Postrue Lock Status : Locking");
-			KillTimer(3);
+			KillTimer(3); IFCtrl = false;
 			DoingTreatMoving = 0;
 			IsMoving = false;
 			m_mainui.GetDlgItem(IDC_UPBUTTON)->EnableWindow(TRUE);
@@ -2377,6 +2418,7 @@ void CSTC1Dlg::ActionTip2()
 			m_mainui.GetDlgItem(IDC_DOWNBUTTON)->EnableWindow(FALSE);
 			this->GetDlgItem(IDC_BUTTON10)->EnableWindow(FALSE);
 		}
+	}
 }
 
 void CSTC1Dlg::JudgeAction()//治疗模式下的判断
@@ -3027,12 +3069,20 @@ void CSTC1Dlg::OnUserAdduser()
 	}
 }
 
-
 void CSTC1Dlg::OnBnClickedmovebeginbutton()
 {
 	if (ChairMode == TreatmentMode)
 	{
 		//CtrlSpeed();
 		SetTimer(2, 100, NULL);
+	}
+	else if (ChairMode != TreatmentMode && (!IfIsGoDown))
+	{
+		IsMoving = true;
+		for (size_t i = 0; i < 6; i++)
+		{
+			IfMoveInPlace[i] = 0;
+		}
+		SetTimer(3, 100, NULL);
 	}
 }

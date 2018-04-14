@@ -237,4 +237,5 @@ public:
 	afx_msg void OnUserAdduser();
 	afx_msg void OnBnClickedmovebeginbutton();
 	bool IFCtrl;//判断是否做过校正
+	bool IfIsGoDown=FALSE;
 };

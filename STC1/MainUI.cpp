@@ -42,11 +42,14 @@ extern CString permission;
 extern float single_move_speed_show[6];
 
 extern double M_COORD[6];
+extern int DoingTreatMoving;
 
 bool IsTreatMoving ;
 double correctdatafor360[6];//用于360平台的校正
 double ALLcorrectdatafor360[36][4];//用于360平台的校正
 double sssForZAxisCorr[6];
+
+int TwoBasicMove;
 //int BeamNum;
 //CString BeamName[20];//束流名称
 //CString BeamTime[20];//束流应用时间
@@ -488,8 +491,28 @@ void CMainUI::OnBnClickedCorrbutton()//做六维校正的操作
 		AfxMessageBox(_T("There is an error in the input value, please check！"));
 		return;
 	}
+
+
+	GetDlgItemText(IDC_360EDIT2, str);
+	double QQ = _wtof(str.GetBuffer());
+
 	GetDlgItemText(IDC_360EDIT, str);
+	if (str=="")
+	{
+		AfxMessageBox(_T("Beam Angle can't be null, please check！"));
+		return;
+	}
 	double QQQ = _wtof(str.GetBuffer());
+	if (QQ!=QQQ)
+	{
+		if (IDYES == MessageBox(_T("The two BEAM ANGLE is different, do you want to continue?"), _T("WARNING!"), MB_YESNO))
+		{
+		}
+		else
+		{
+			return;
+		}
+	}
 
 	if (abs(TTS_coordinate_value[2]- QQQ)<10)
 	{
@@ -1094,6 +1117,7 @@ void CMainUI::OnBnClickedTreatfinishbutton()
 
 void CMainUI::OnBnClickedUpbutton()//上人姿态
 {
+	TwoBasicMove = 2;
 	ChairMode = 4;
 	CTabCtrl *tab = (CTabCtrl*)GetParent();//获取父窗口即tab控件指针 
 
@@ -1124,12 +1148,125 @@ void CMainUI::OnBnClickedUpbutton()//上人姿态
 	str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_AZEDIT, str);
 	szKeyValue.ReleaseBuffer();
 
+
+	tab->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_movebeginBUTTON, BN_CLICKED), NULL);
+	//tab->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_CTRLBUTTON, BN_CLICKED), NULL);//OnBnClickedCtrlbutton();
+}
+
+void CMainUI::REOnBnClickedUpbutton()//上人姿态
+{
+	TwoBasicMove = 2;
+	ChairMode = 4;
+	CTabCtrl *tab = (CTabCtrl*)GetParent();//获取父窗口即tab控件指针 
+
+	DWORD dwCopied = 0;
+	double stepnum = 0;
+	CString szKeyValue;
+	CString m_szFileName = L"./SettingsINI.ini";
+	dwCopied = ::GetPrivateProfileString(L"StepOn", L"iso", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	stepnum = _wtof(szKeyValue.GetBuffer());
+	stepnum = 270 - stepnum;
+	if (stepnum > 180)stepnum = stepnum - 360;
+	if (stepnum < -180)stepnum = stepnum + 360;
+	str.Format(L"%.0f", stepnum); tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
+	dwCopied = ::GetPrivateProfileString(L"StepOn", L"pitch", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	stepnum = _wtof(szKeyValue.GetBuffer());
+	str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_XEDIT, str);
+	dwCopied = ::GetPrivateProfileString(L"StepOn", L"roll", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	stepnum = _wtof(szKeyValue.GetBuffer());
+	str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_YEDIT, str);
+	dwCopied = ::GetPrivateProfileString(L"StepOn", L"LeftRight", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	stepnum = _wtof(szKeyValue.GetBuffer());
+	str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_AXEDIT, str);
+	dwCopied = ::GetPrivateProfileString(L"StepOn", L"FrontBack", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	stepnum = _wtof(szKeyValue.GetBuffer());
+	str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_AYEDIT, str);
+	dwCopied = ::GetPrivateProfileString(L"StepOn", L"TopBottom", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	stepnum = _wtof(szKeyValue.GetBuffer());
+	str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_AZEDIT, str);
+	szKeyValue.ReleaseBuffer();
+
+
+	//tab->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_movebeginBUTTON, BN_CLICKED), NULL);
 	tab->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_CTRLBUTTON, BN_CLICKED), NULL);//OnBnClickedCtrlbutton();
 }
 
 
 void CMainUI::OnBnClickedDownbutton()
 {
+
+	if (PisOpen)
+	{
+		this->GetDlgItem(IDC_TREATMODEBUTTON)->EnableWindow(TRUE);
+	}
+	TwoBasicMove = 1;
+	ChairMode = 4;
+	for (size_t i = 0; i < 6; i++)
+	{
+		sssForZAxisCorr[i] = 0;
+	}
+	SetDlgItemTextW(IDC_360EDIT, L"270");
+	CTabCtrl *tab = (CTabCtrl*)GetParent();//获取父窗口即tab控件指针 
+
+	DWORD dwCopied = 0;
+	double stepnum = 0;
+	CString szKeyValue;
+	CString m_szFileName = L"./SettingsINI.ini";
+	dwCopied = ::GetPrivateProfileString(L"ReferencePoint", L"lat", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	stepnum = _wtof(szKeyValue.GetBuffer());// ref[3] = stepnum;
+	str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_AXEDIT, str);
+	dwCopied = ::GetPrivateProfileString(L"ReferencePoint", L"long", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	stepnum = _wtof(szKeyValue.GetBuffer()); //ref[4] = stepnum;
+	str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_AYEDIT, str);
+	dwCopied = ::GetPrivateProfileString(L"ReferencePoint", L"vert", L"", szKeyValue.GetBuffer(MAX_PATH), MAX_PATH, m_szFileName);
+	stepnum = _wtof(szKeyValue.GetBuffer());// ref[5] = stepnum;
+	str.Format(L"%.1f", stepnum); tab->SetDlgItemTextW(IDC_AZEDIT, str);
+	//szKeyValue.ReleaseBuffer();
+
+
+
+
+	szKeyValue.ReleaseBuffer();
+
+	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_XEDIT, str);
+	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_YEDIT, str);
+	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_ZEDIT, str);
+	str.Format(L"%d", 5); tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
+	REset = true;
+	//str.Format(L"%d", 270); SetDlgItemTextW(IDC_360EDIT, str);
+	tab->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_movebeginBUTTON, BN_CLICKED), NULL);
+	//tab->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_CTRLBUTTON, BN_CLICKED), NULL);//OnBnClickedCtrlbutton();
+
+
+	for (size_t i = 0; i < 3; i++)
+	{
+		ref[i] = 0;
+	}
+
+
+	/*CTabCtrl *tab = (CTabCtrl*)GetParent();//获取父窗口即tab控件指针 
+	CString str;
+	double num = 5;
+	str.Format(L"%.1f", num);
+	tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
+	REset = true;
+	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_XEDIT, str);
+	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_YEDIT, str);
+	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_ZEDIT, str);
+	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_AXEDIT, str);
+	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_AYEDIT, str);
+	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_AZEDIT, str);
+	tab->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_CTRLBUTTON, BN_CLICKED), NULL);*/
+
+}
+
+void CMainUI::REOnBnClickedDownbutton()
+{
+	if (PisOpen)
+	{
+		this->GetDlgItem(IDC_TREATMODEBUTTON)->EnableWindow(TRUE);
+	}
+	TwoBasicMove = 1;
 	ChairMode = 4;
 	for (size_t i = 0; i < 6; i++)
 	{
@@ -1164,7 +1301,7 @@ void CMainUI::OnBnClickedDownbutton()
 	str.Format(L"%d", 5); tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
 	REset = true;
 	//str.Format(L"%d", 270); SetDlgItemTextW(IDC_360EDIT, str);
-
+	//tab->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_movebeginBUTTON, BN_CLICKED), NULL);
 	tab->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_CTRLBUTTON, BN_CLICKED), NULL);//OnBnClickedCtrlbutton();
 
 
@@ -1172,21 +1309,6 @@ void CMainUI::OnBnClickedDownbutton()
 	{
 		ref[i] = 0;
 	}
-
-
-	/*CTabCtrl *tab = (CTabCtrl*)GetParent();//获取父窗口即tab控件指针 
-	CString str;
-	double num = 5;
-	str.Format(L"%.1f", num);
-	tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
-	REset = true;
-	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_XEDIT, str);
-	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_YEDIT, str);
-	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_ZEDIT, str);
-	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_AXEDIT, str);
-	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_AYEDIT, str);
-	str.Format(L"%d", 0); tab->SetDlgItemTextW(IDC_AZEDIT, str);
-	tab->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_CTRLBUTTON, BN_CLICKED), NULL);*/
 
 }
 //BOOL CMainUI::PreTranslateMessage(MSG* pMsg)
@@ -1344,6 +1466,7 @@ void CMainUI::LinkToESB2()
 
 void CMainUI::LinkToESB()
 {
+
 	CoInitialize(NULL);//初始化com环境  
 
 	ISoapSerializerPtr Serializer;
@@ -1403,11 +1526,11 @@ void CMainUI::LinkToESB()
 	file2.Close();
 
 	
-	/*str.Format(L"%s", buff);
-	SetDlgItemText(IDC_EDIT1, str);
+	str.Format(L"%s", buff);
+
 	CString        m_HttpCode;
-	UINT           PageCode;   //CP_UTF8:65001 CP_ACP:0  转换代码用  
-	PageCode = 65001; //因为我们的网址是UTF8格式，所以用65001；
+	UINT           PageCode;   //CP_UTF8:65001 CP_ACP:0  
+	PageCode = 54936; //因为我们的网址是UTF8格式，所以用65001；
 	int nBufferSize = MultiByteToWideChar(PageCode, 0, (LPCSTR)buff, -1, NULL, 0);
 
 	wchar_t *pBuffer = new wchar_t[nBufferSize + 1];
@@ -1416,9 +1539,15 @@ void CMainUI::LinkToESB()
 	//gb2312转为unicode,则用CP_ACP  
 	//gbk转为unicode,也用CP_ACP  
 	//utf-8转为unicode,则用CP_UTF8  
-	MultiByteToWideChar(PageCode, 0, (LPCSTR)buff, -1, pBuffer, nBufferSize * sizeof(wchar_t));
+	MultiByteToWideChar(PageCode, 0, (LPCSTR)buff, -1, pBuffer, nBufferSize * sizeof(wchar_t));//到这里转为了utf-16
 
-	m_HttpCode += pBuffer;
+	PageCode = 0; //因为我们的网址是UTF8格式，所以用65001；
+	//nBufferSize = WideCharToMultiByte(PageCode, 0, (LPCSTR)buff, -1, NULL, 0);
+	char buff2[1024] = { 0 };
+	WideCharToMultiByte(CP_UTF8, 0, pBuffer, -1, buff2, 0,NULL,NULL);
+
+
+	m_HttpCode += buff2;
 
 	delete pBuffer;
 
@@ -1426,7 +1555,7 @@ void CMainUI::LinkToESB()
 	CFile file;
 	file.Open(_T("ESBtest.txt"), CFile::modeCreate | CFile::modeNoTruncate | CFile::modeReadWrite);
 	file.Write(m_HttpCode, 2*m_HttpCode.GetLength());
-	file.Close();*/
+	file.Close();
 
 	//printf("Answer:%s\n", buff);
 	CoUninitialize();
@@ -1454,7 +1583,6 @@ void CMainUI::LinkToESB()
 			}
 			if (UsefulStringCOunt == 7)
 			{
-				//UTF8ToGBK(result);
 				m_report.PatientName = result;
 				str.Format(L"%s%s", L"PatientName:  ", m_report.PatientName); SetDlgItemText(IDC_patientname, str);
 			}
@@ -1516,7 +1644,7 @@ void CMainUI::ReadConfig()
 }
 
 //主要接口，输入网址，获取代码
-CString CMainUI::GetHttpCode(CString &url)
+BOOL CMainUI::GetHttpCode(CString &url)
 {
 	CString        m_strError;  //接受错误信息
 	CString        m_HttpCode;  //接受抓取的网页代码
@@ -1553,7 +1681,7 @@ CString CMainUI::GetHttpCode(CString &url)
 		{
 			m_strError = _T("非法的URL");
 			AfxMessageBox(m_strError);
-			return NULL;
+			return FALSE;
 		}
 
 		pServer = session.GetHttpConnection(strServerName, nPort);
@@ -1563,7 +1691,7 @@ CString CMainUI::GetHttpCode(CString &url)
 		{
 			m_strError = _T("无法与服务器建立连接");
 			AfxMessageBox(m_strError);
-			return NULL;
+			return FALSE;
 		}
 		//下面第一个可以为1  打开http链接
 		htmlFile = pServer->OpenRequest(CHttpConnection::HTTP_VERB_GET, strObject,
@@ -1573,7 +1701,7 @@ CString CMainUI::GetHttpCode(CString &url)
 		{
 			m_strError = _T("无法与服务器建立连接");
 			AfxMessageBox(m_strError);
-			return NULL;
+			return FALSE;
 		}
 
 		/////////////////////////////////////////////////
@@ -1584,7 +1712,7 @@ CString CMainUI::GetHttpCode(CString &url)
 			{
 				m_strError = _T("网络错误－无法发送请求报头");
 				AfxMessageBox(m_strError);
-				return NULL;
+				return FALSE;
 			}
 		}
 		catch (CInternetException *ex)
@@ -1593,7 +1721,7 @@ CString CMainUI::GetHttpCode(CString &url)
 			m_strError = _T("无法发送http报头,可能网络状况有问题");
 			AfxMessageBox(m_strError);
 			ex->Delete();
-			return NULL;
+			return FALSE;
 		}
 		//////////////////////////////////////////////////////////////////////////
 
@@ -1601,7 +1729,7 @@ CString CMainUI::GetHttpCode(CString &url)
 		{
 			m_strError = _T("网络错误－无法查询反馈代码");
 			AfxMessageBox(m_strError);
-			return NULL;
+			return FALSE;
 		}
 
 		if (dwRetcode >= 200 && dwRetcode < 300)
@@ -1637,12 +1765,12 @@ CString CMainUI::GetHttpCode(CString &url)
 				delete htmlFile;
 
 				//多余。
-				CFile file;
-				file.Open(_T("test2.txt"), CFile::modeCreate | CFile::modeNoTruncate | CFile::modeReadWrite);
-				file.Write(m_HttpCode, m_HttpCode.GetLength());
-				file.Close();
+				//CFile file;
+				//file.Open(_T("test2.txt"), CFile::modeCreate | CFile::modeNoTruncate | CFile::modeReadWrite);
+				//file.Write(m_HttpCode, m_HttpCode.GetLength());
+				//file.Close();
 
-				return m_HttpCode;
+				//return m_HttpCode;
 
 			}
 			catch (CInternetException* pEx)
@@ -1654,7 +1782,7 @@ CString CMainUI::GetHttpCode(CString &url)
 				//因为是CString,所以返回NULL，而不是0；
 				return NULL;
 			}
-			return StrContent;
+			return TRUE;
 
 		}
 		else
@@ -1666,7 +1794,7 @@ CString CMainUI::GetHttpCode(CString &url)
 			AfxMessageBox(_T("未成功"));
 			//OnProcessError(dwRetcode, session, pServer, htmlFile);
 
-			return NULL;
+			return FALSE;
 		}
 
 	}
@@ -1675,10 +1803,10 @@ CString CMainUI::GetHttpCode(CString &url)
 		m_strError = _T("网络错误");
 		AfxMessageBox(_T("网络错误"));
 		pEx->Delete();
-		return NULL;
+		return FALSE;
 	}
 
-	return NULL;
+	return TRUE;
 }
 
 void CMainUI::OnSavereport()
@@ -2041,7 +2169,7 @@ void CMainUI::OnStnClickedStaticpexit()
 		PisOpen = true;
 		PID = m_report.PatientID;
 		this->GetDlgItem(IDC_patientIDEDIT)->EnableWindow(FALSE);
-		this->GetDlgItem(IDC_TREATMODEBUTTON)->EnableWindow(TRUE);
+
 		
 	}
 	else//关闭病人
@@ -2062,6 +2190,7 @@ void CMainUI::OnStnClickedStaticpexit()
 			PID = L"Patient ID";
 			SetDlgItemTextW(IDC_patientIDEDIT, PID);
 			this->GetDlgItem(IDC_patientIDEDIT)->EnableWindow(TRUE);
+			this->GetDlgItem(IDC_TREATMODEBUTTON)->EnableWindow(FALSE);
 		}
 	}
 	
@@ -2118,5 +2247,10 @@ void CMainUI::OnCancel()
 void CMainUI::OnBnClickedButton3()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	LinkToESB();
+	str = "http://www.baidu.com";
+	if(GetHttpCode(str))
+	{
+		LinkToESB();
+	}
+	
 }

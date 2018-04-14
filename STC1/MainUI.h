@@ -16,6 +16,9 @@
 #include "Translation.h"
 #include "Login.h"
 
+#include <iphlpapi.h>
+#include <icmpapi.h>
+
 #import "D:\\msxml4.dll"
 #import "C:\\Program Files (x86)\\Common Files\\MSSoap\\Binaries\\MSSOAP30.dll"
 
@@ -146,6 +149,8 @@ public:
 		CString Pname, PID;
 		afx_msg void OnBnClickedUpbutton();
 		afx_msg void OnBnClickedDownbutton();
+		afx_msg void REOnBnClickedUpbutton();
+		afx_msg void REOnBnClickedDownbutton();
 
 
 		afx_msg void OnEnSetfocuspatientidedit();
@@ -163,7 +168,7 @@ public:
 		 double ULimitInTTS[6];//在tts中对六维度的限制
 		 double FLimitInTTS[6];//在tts中对六维度的限制,下限
 
-		 CString GetHttpCode(CString &url);
+		 BOOL GetHttpCode(CString &url);
 
 		 CColorButton m_Lockcontrol2;
 		 CColorButton m_EStopcontrol;
@@ -203,6 +208,5 @@ public:
 		 afx_msg void OnBnClickedButton3();
 
 		 double vector[6];		 
-
 
 };

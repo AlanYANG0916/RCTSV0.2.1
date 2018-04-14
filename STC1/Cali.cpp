@@ -377,8 +377,6 @@ void CCali::OnBnClickedCtrlbutton2()
 	double TTS_coordinate_value[7];
 	if (m_radiogroup2==0)//iec table top坐标系下
 	{
-
-
 		//this->GetDlgItem(IDC_CORRBUTTON)->EnableWindow(FALSE);
 		double NUM;
 		GetDlgItemText(IDC_XEDIT3, str);
@@ -446,7 +444,7 @@ void CCali::OnBnClickedCtrlbutton2()
 		str.Format(L"%.3f", vector[4]+ sssForZAxisCorr[4]); tab->SetDlgItemTextW(IDC_AYEDIT, str);
 		str.Format(L"%.3f", vector[5]+ sssForZAxisCorr[5]); tab->SetDlgItemTextW(IDC_AZEDIT, str);
 
-		GetDlgItemText(IDC_ZEDIT3, str);
+		/*GetDlgItemText(IDC_ZEDIT3, str);
 		NUM = _wtof(str.GetBuffer());
 		NUM = 270 - NUM;
 		if (NUM>180)
@@ -457,7 +455,36 @@ void CCali::OnBnClickedCtrlbutton2()
 		{
 			NUM += 360;
 		}
-		str.Format(L"%.1f", NUM); tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
+		str.Format(L"%.1f", NUM); tab->SetDlgItemTextW(IDC_AZ360EDIT, str);*/
+
+		tab->GetDlgItemText(IDC_RAZ360EDIT, str);
+		double rrr = _wtof(str.GetBuffer());//目前360旋转台的实际位置
+
+		GetDlgItemText(IDC_ZEDIT3, str);
+		NUM = _wtof(str.GetBuffer());//实际的PV Beam值
+		double temp = 270 - NUM;
+		if (temp >= 180) { temp -= 360; }
+		if (temp<-180) { temp += 360; }
+		if (abs(180 - abs(rrr))<40)//实际位置在50-130的区间内
+		{
+			if (abs(180 - abs(temp))<15)//目标位置在75-105的区间内
+			{
+				if (temp - rrr>90)
+				{
+					int tempp = temp;
+					temp = -(360 - abs(tempp));
+				}
+			}
+		}
+		else
+		{
+
+		}
+		str.Format(L"%.1f", temp);
+		tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
+
+
+
 		tab->PostMessage(WM_COMMAND, MAKEWPARAM(IDC_CTRLBUTTON, BN_CLICKED), NULL);
 
 	}
@@ -473,6 +500,11 @@ void CCali::OnBnClickedCtrlbutton2()
 			str.Format(L"%.3f", mid[3]); tab->SetDlgItemTextW(IDC_AXEDIT, str);
 			str.Format(L"%.3f", mid[4]); tab->SetDlgItemTextW(IDC_AYEDIT, str);
 			str.Format(L"%.3f", mid[5]); tab->SetDlgItemTextW(IDC_AZEDIT, str);
+			if (abs(mid[6])>200)
+			{
+				AfxMessageBox(_T("The 360 platform's movement is range from -200°to 200°  , please check!"));
+				return;
+			}
 			str.Format(L"%.1f", mid[6]); tab->SetDlgItemTextW(IDC_AZ360EDIT, str);
 			for (size_t i = 0; i < 6; i++)
 			{
@@ -1156,7 +1188,7 @@ void CCali::OnStnClickedStatic360Down()
 	NUM = _wtof(str.GetBuffer());
 
 	NUM = NUM - m_speed[6];
-	if (NUM<-180)
+	if (NUM<-200)
 	{
 		NUM = NUM + 360;
 	}
